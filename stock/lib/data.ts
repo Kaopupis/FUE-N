@@ -1,7 +1,6 @@
-import raw from '../data/sheet-receipts.json';
 import type { GradeInfo, Receipt } from './types';
 
-type RawReceipt = {
+export type RawReceipt = {
   id: string;
   date: string;
   supplier: string;
@@ -17,7 +16,8 @@ type RawReceipt = {
 };
 
 // ข้อมูลจากชีต "ใบรับสินค้า(เข้า)" — บัญชีรับส่งสินค้า สหมิตร (มิ.ย. 2569 เป็นต้นไป)
-export const SHEET_RECEIPTS: Receipt[] = (raw as RawReceipt[]).map(({ draft, ...r }) => ({
+// โหลดจาก /api/data/receipts หลัง login (ไม่ฝังไว้ในหน้าเว็บ)
+export const parseSheetReceipts = (raw: RawReceipt[]): Receipt[] => raw.map(({ draft, ...r }) => ({
   ...r,
   note: draft ? 'ใบนี้ในชีตยังเป็นแบบร่าง ยังไม่กรอกกระสอบ (ราคาที่ค้างอยู่ซ้ำกับใบก่อนหน้า จึงยังไม่นับ)' : undefined,
   bags: r.bags.map(([no, grade, gross, tare, net]) => ({ no, grade, gross, tare, net })),

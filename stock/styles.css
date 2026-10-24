@@ -294,3 +294,23 @@ button.chip:hover { border-color: var(--leaf); }
   @keyframes slide { from { transform: translateX(24px); opacity: 0.6; } }
 }
 .muted { color: var(--ink-3); }
+
+/* ---------- login / ผู้ใช้ ---------- */
+.auth-wrap {
+  min-height: 100%; display: grid; place-items: center; background: var(--mint);
+  padding-block: 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.auth-card { width: min(400px, 100%); padding: 26px 24px; display: flex; flex-direction: column; gap: 18px; border-top: 4px solid var(--leaf); }
+.auth-brand { padding: 0; color: var(--ink); }
+.auth-brand small { color: var(--ink-3); }
+.side-user { border-top: 1px solid rgb(255 255 255 / 12%); padding: 12px 8px 0; display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.side-user-name b { display: block; font-size: 0.92rem; }
+.side-user-name small { color: var(--nav-dim); font-size: 0.75rem; }
+.side-user-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.side-user-actions button {
+  all: unset; cursor: pointer; font-size: 0.78rem; padding: 4px 9px; border-radius: 6px; border: 1px solid rgb(255 255 255 / 22%); color: var(--nav-fg);
+}
+.side-user-actions button:hover { background: rgb(255 255 255 / 10%); }
+.side-user-actions button:focus-visible { outline: 2px solid #fff; }
+.side-user + .side-foot { margin-top: 0; }
+.mono { font-family: var(--font-num); letter-spacing: 0.02em; }

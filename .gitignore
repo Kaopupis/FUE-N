@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 dist-stock
+
+# Cloudflare local
+.dev.vars
+.wrangler

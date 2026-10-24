@@ -1,0 +1,16 @@
+# Cloudflare Pages: stock-sahamit
+# ไฟล์นี้เป็นตัวกำหนด binding และตัวแปรของ Pages (แทนการตั้งค่าใน dashboard)
+# รหัสผ่านผู้ดูแลคนแรกให้ตั้งเป็น secret: npx wrangler pages secret put ADMIN_PASSWORD --project-name stock-sahamit
+name = "stock-sahamit"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
+
+[vars]
+ADMIN_USERNAME = "admin"
+SESSION_TTL_HOURS = "12"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stock-sahamit-db"
+database_id = "fa082caa-93be-47f6-aeb9-507166d6d1a2"
+migrations_dir = "migrations"

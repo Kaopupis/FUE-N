@@ -1,4 +1,4 @@
-import { BASE_GRADES, SHEET_RECEIPTS, VAT_RATE, gradeFamily, supplierGroup } from './data';
+import { BASE_GRADES, VAT_RATE, gradeFamily, supplierGroup } from './data';
 import { monthKey, round2 } from './format';
 import type { GradeInfo, LocalData, Movement, PriceLine, Receipt } from './types';
 
@@ -106,8 +106,8 @@ export function linesFromBags(r: Pick<Receipt, 'bags'>, prices: Record<string, n
   });
 }
 
-export function buildModel(local: LocalData): Model {
-  const receipts = [...SHEET_RECEIPTS, ...local.receipts]
+export function buildModel(local: LocalData, sheet: Receipt[]): Model {
+  const receipts = [...sheet, ...local.receipts]
     .map((r) => viewReceipt(r, local.priceOverrides[r.id]))
     .sort((a, b) => (a.date === b.date ? b.id.localeCompare(a.id) : b.date.localeCompare(a.date)));
   const receiptById = new Map(receipts.map((r) => [r.id, r]));
