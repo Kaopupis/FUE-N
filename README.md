@@ -1,29 +1,11 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# stock-sahamit
 
-# Run and deploy your AI Studio app
+ระบบสต๊อกสหมิตร: สต๊อกสินค้าทองแดง/เศษโลหะ (โค้ดอยู่ในโฟลเดอร์ `stock/`)
 
-This contains everything you need to run your app locally.
+- เว็บ: https://stock-sahamit.pages.dev/
+- Repo: https://github.com/Kaopupis/stock-sahamit
 
-View your app in AI Studio: https://ai.studio/apps/drive/1ouVe3JvtkA9-vGbbUZ4gM-FmTnzRb_O8
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
-
----
-
-## ระบบสต๊อกสหมิตร (`stock/`)
-
-ระบบสต๊อกสินค้าทองแดง/เศษโลหะ ใช้ข้อมูลจาก Google Sheet
+ข้อมูลอ้างอิงจาก Google Sheet
 [บัญชีรับส่งสินค้า สหมิตร เริ่มเดือนมิถุนายน 2569](https://docs.google.com/spreadsheets/d/1LG4EwAsb3N8Z_KCecDgZwyrWBk9gm-m3v-U7NgzppEo/edit)
 (ใบรับ 152 ใบ, B06-01 ถึง B10-06)
 
@@ -48,4 +30,22 @@ npm run build         # ได้ไฟล์ระบบสต๊อกใน d
 ส่วนที่ผู้ใช้บันทึกเพิ่มเก็บใน localStorage ของเบราว์เซอร์
 
 Cloudflare Pages: Build command `npm run build` · Build output directory `dist`
-(แอป FUE-N เดิม build ด้วย `npm run build:fue-n`)
+
+---
+
+## แอป FUE-N (ฟื้น) เดิม
+
+This contains everything you need to run your app locally.
+
+View your app in AI Studio: https://ai.studio/apps/drive/1ouVe3JvtkA9-vGbbUZ4gM-FmTnzRb_O8
+
+### Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev` (build: `npm run build:fue-n`)
