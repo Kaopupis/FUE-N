@@ -11,7 +11,6 @@
 
 ```
 npm install
-npm run stock:dev     # เปิดที่ http://localhost:3100
 npm run build         # ได้ไฟล์ระบบสต๊อกใน dist/ (ใช้กับ Cloudflare Pages)
 ```
 
@@ -29,7 +28,49 @@ npm run build         # ได้ไฟล์ระบบสต๊อกใน d
 ข้อมูลจากชีตอยู่ใน `stock/data/sheet-receipts.json` (สร้างด้วย `stock/data/parse_sheet.py`)
 ส่วนที่ผู้ใช้บันทึกเพิ่มเก็บใน localStorage ของเบราว์เซอร์
 
-Cloudflare Pages: Build command `npm run build` · Build output directory `dist`
+## Login และผู้ใช้งาน (Cloudflare D1)
+
+ทุกหน้าและข้อมูลต้อง login ก่อน ผู้ใช้เก็บในฐานข้อมูล D1 ชื่อ `stock-sahamit-db`
+(รหัสผ่านเข้ารหัสแบบ PBKDF2-SHA256, session เป็น cookie HttpOnly อายุ 12 ชั่วโมง, ใส่รหัสผิด 5 ครั้งล็อก 15 นาที)
+
+- **ผู้ดูแลระบบ** เพิ่มผู้ใช้ แก้ไขชื่อ/สิทธิ์ ปิดการใช้งาน และรีเซ็ตรหัสผ่าน (เมนู ระบบ → ผู้ใช้งาน)
+- **พนักงาน** ใช้ระบบสต๊อกได้ทุกเมนู และเปลี่ยนรหัสผ่านของตัวเองได้
+- ผู้ใช้ใหม่หรือผู้ที่ถูกรีเซ็ต ต้องตั้งรหัสผ่านใหม่เองเมื่อเข้าครั้งแรก
+
+| ส่วน | ไฟล์ |
+| --- | --- |
+| API (Pages Functions) | `functions/api/**` |
+| ตรรกะ login / session / รหัสผ่าน | `server/auth.ts` |
+| ตาราง D1 | `migrations/0001_auth.sql` |
+| ตั้งค่า Cloudflare | `wrangler.toml` |
+
+### Deploy บน Cloudflare Pages
+
+`wrangler.toml` เป็นตัวกำหนดการตั้งค่า Pages (binding D1 และตัวแปร) แทนหน้า dashboard
+
+| ค่า | ตั้งที่ | ความหมาย |
+| --- | --- | --- |
+| Build command `npm run build` · Output `dist` | dashboard / `wrangler.toml` | สร้างเว็บระบบสต๊อก |
+| `DB` → `stock-sahamit-db` | `wrangler.toml` | ฐานข้อมูลผู้ใช้ |
+| `ADMIN_USERNAME` | `wrangler.toml` (ค่าเริ่มต้น `admin`) | ชื่อผู้ดูแลคนแรก |
+| `SESSION_TTL_HOURS` | `wrangler.toml` (ค่าเริ่มต้น `12`) | อายุการ login |
+| `ADMIN_PASSWORD` | **Secret** ใน dashboard (Settings → Variables and Secrets) | รหัสผ่านผู้ดูแลคนแรก อย่างน้อย 8 ตัว |
+
+ผู้ดูแลคนแรกถูกสร้างจาก `ADMIN_USERNAME` / `ADMIN_PASSWORD` ตอนมีคน login ครั้งแรกและยังไม่มีผู้ใช้ในฐานข้อมูล
+และต้องเปลี่ยนรหัสผ่านทันที หลังจากนั้นค่า `ADMIN_PASSWORD` ไม่ถูกใช้อีก
+
+ตั้ง secret ผ่านคำสั่งก็ได้: `npx wrangler pages secret put ADMIN_PASSWORD --project-name stock-sahamit`
+เมื่อเพิ่ม migration ใหม่: `npm run db:migrate:remote`
+
+### ทดสอบในเครื่อง
+
+```
+cp .dev.vars.example .dev.vars   # ใส่ ADMIN_PASSWORD สำหรับทดสอบ
+npm run db:migrate:local
+npm run dev:full                 # http://localhost:8788 (มี API และ D1 จำลอง)
+npm run stock:dev                # แก้หน้าจอแบบ hot reload ที่ :3100 (ส่ง /api ไปที่ :8788)
+npm run typecheck
+```
 
 ---
 

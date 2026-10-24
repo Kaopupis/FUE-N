@@ -1,0 +1,2 @@
+# คัดลอกเป็น .dev.vars สำหรับทดสอบในเครื่อง (wrangler pages dev) ห้าม commit ไฟล์ .dev.vars
+ADMIN_PASSWORD=change-me-please

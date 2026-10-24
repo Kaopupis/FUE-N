@@ -26,5 +26,12 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "resolveJsonModule": true
-  }
+  },
+  "exclude": [
+    "functions",
+    "server",
+    "node_modules",
+    "dist",
+    "dist-stock"
+  ]
 }
