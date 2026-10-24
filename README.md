@@ -30,7 +30,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/1ouVe3JvtkA9-vGbbUZ4gM-
 ```
 npm install
 npm run stock:dev     # เปิดที่ http://localhost:3100
-npm run stock:build   # ได้ไฟล์ใน dist-stock/
+npm run build         # ได้ไฟล์ระบบสต๊อกใน dist/ (ใช้กับ Cloudflare Pages)
 ```
 
 เมนู
@@ -46,3 +46,6 @@ npm run stock:build   # ได้ไฟล์ใน dist-stock/
 
 ข้อมูลจากชีตอยู่ใน `stock/data/sheet-receipts.json` (สร้างด้วย `stock/data/parse_sheet.py`)
 ส่วนที่ผู้ใช้บันทึกเพิ่มเก็บใน localStorage ของเบราว์เซอร์
+
+Cloudflare Pages: Build command `npm run build` · Build output directory `dist`
+(แอป FUE-N เดิม build ด้วย `npm run build:fue-n`)
