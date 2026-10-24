@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
 import { Bar as RBar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Bar, Card, GradeChip, Icon, Kpi, PageHead, ReceiptLink, StatusChip, SupplierLink, gradeColor, useApp } from '../components/ui';
+import { Bar, Card, GradeChip, gradeColor, Icon, Kpi, LINK, Note, PageHead, ReceiptLink, StatusChip, SupplierLink, useApp } from '../components/ui';
 import { bahtShort, kg, monthLabel, thDate, tonne } from '../lib/format';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function Dashboard() {
   const { model, go } = useApp();
@@ -32,19 +34,19 @@ export default function Dashboard() {
         desc={<>ข้อมูลใบรับสินค้าสหมิตร {receipts.length} ใบ ตั้งแต่ {thDate(receipts[receipts.length - 1].date)} ถึง {thDate(latest.date)}</>}
         actions={
           <>
-            <button className="btn" onClick={() => go({ page: 'issues', newForm: true })}><Icon name="issues" size={16} />จ่ายออก</button>
-            <button className="btn pri" onClick={() => go({ page: 'receipts', newForm: true })}><Icon name="plus" size={16} />รับสินค้าเข้า</button>
+            <Button variant="outline" onClick={() => go({ page: 'issues', newForm: true })}><Icon name="issues" size={16} />จ่ายออก</Button>
+            <Button onClick={() => go({ page: 'receipts', newForm: true })}><Icon name="plus" size={16} />รับสินค้าเข้า</Button>
           </>
         }
       />
-      <div className="grid g-kpi">
+      <div className="grid-kpi">
         <Kpi hero icon="stock" label="สต๊อกคงเหลือ" value={kg(totals.balance)} unit="กก." sub={`≈ ${tonne(totals.balance)} · มูลค่า ${bahtShort(totals.stockValue)} บาท`} onClick={() => go({ page: 'stock' })} />
         <Kpi icon="receipts" label="รับเข้าทั้งหมด" value={kg(totals.kg)} unit="กก." sub={`${receipts.length} ใบรับ · ${totals.trucks} เที่ยวรถ`} onClick={() => go({ page: 'receipts' })} />
         <Kpi icon="coin" label="มูลค่ารับซื้อ (ก่อน VAT)" value={bahtShort(totals.value)} unit="บาท" sub="เฉพาะใบที่กำหนดราคาแล้ว" onClick={() => go({ page: 'reports' })} />
         <Kpi icon="clock" label="ใบรับรอกำหนดราคา" value={String(totals.pending)} unit="ใบ" sub="กดเพื่อดูและใส่ราคา" onClick={() => go({ page: 'receipts', month: 'pending' })} />
       </div>
 
-      <div className="grid g-2">
+      <div className="grid-2">
         <Card title="น้ำหนักรับเข้ารายเดือน" sub="หน่วย: ตัน แยกตามเกรดหลัก">
           <div style={{ height: 290 }}>
             <ResponsiveContainer>
@@ -52,7 +54,7 @@ export default function Dashboard() {
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="m" tickLine={false} axisLine={false} />
                 <YAxis tickLine={false} axisLine={false} />
-                <Tooltip formatter={(v: number) => `${v.toLocaleString('th-TH', { maximumFractionDigits: 2 })} ตัน`} cursor={{ fill: 'var(--leaf-soft)' }} />
+                <Tooltip formatter={(v: number) => `${v.toLocaleString('th-TH', { maximumFractionDigits: 2 })} ตัน`} cursor={{ fill: 'var(--accent)' }} />
                 <Legend iconType="square" wrapperStyle={{ fontSize: 12 }} />
                 {topNames.map((g) => <RBar key={g} dataKey={g} stackId="a" fill={gradeColor(g)} />)}
                 <RBar dataKey="อื่นๆ" stackId="a" fill="#9fb5a7" radius={[4, 4, 0, 0]} />
@@ -60,7 +62,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
         </Card>
-        <Card title="คงเหลือตามเกรด" sub="กดชื่อเกรดเพื่อดูความเคลื่อนไหว" right={<button className="btn sm" onClick={() => go({ page: 'stock' })}>ดูทั้งหมด</button>}>
+        <Card title="คงเหลือตามเกรด" sub="กดชื่อเกรดเพื่อดูความเคลื่อนไหว" right={<Button variant="outline" size="sm" onClick={() => go({ page: 'stock' })}>ดูทั้งหมด</Button>}>
           <div className="stack" style={{ gap: 10 }}>
             {grades.filter((g) => g.balance > 0).slice(0, 8).map((g) => (
               <div key={g.grade} className="stack" style={{ gap: 4 }}>
@@ -72,23 +74,23 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid g-2">
-        <Card title="ใบรับล่าสุด" pad={false} right={<button className="btn sm" onClick={() => go({ page: 'receipts' })}>ทั้งหมด</button>}>
-          <div className="tbl-wrap">
-            <table className="tbl">
-              <thead><tr><th>เลขที่รับ</th><th>วันที่</th><th>ผู้ขาย</th><th className="r">นน.สุทธิ (กก.)</th><th>สถานะราคา</th></tr></thead>
-              <tbody>
+      <div className="grid-2">
+        <Card title="ใบรับล่าสุด" pad={false} right={<Button variant="outline" size="sm" onClick={() => go({ page: 'receipts' })}>ทั้งหมด</Button>}>
+          <div>
+            <Table>
+              <TableHeader><TableRow><TableHead>เลขที่รับ</TableHead><TableHead>วันที่</TableHead><TableHead>ผู้ขาย</TableHead><TableHead className="text-right">นน.สุทธิ (กก.)</TableHead><TableHead>สถานะราคา</TableHead></TableRow></TableHeader>
+              <TableBody>
                 {receipts.slice(0, 8).map((r) => (
-                  <tr key={r.id} className="click" onClick={() => go({ page: 'receipts', receiptId: r.id })}>
-                    <td><ReceiptLink id={r.id} /></td>
-                    <td className="num">{thDate(r.date)}</td>
-                    <td><SupplierLink name={r.supplier} /></td>
-                    <td className="r num">{kg(r.netKg)}</td>
-                    <td><StatusChip s={r.status} /></td>
-                  </tr>
+                  <TableRow key={r.id} className="click" onClick={() => go({ page: 'receipts', receiptId: r.id })}>
+                    <TableCell><ReceiptLink id={r.id} /></TableCell>
+                    <TableCell className="num">{thDate(r.date)}</TableCell>
+                    <TableCell><SupplierLink name={r.supplier} /></TableCell>
+                    <TableCell className="text-right num">{kg(r.netKg)}</TableCell>
+                    <TableCell><StatusChip s={r.status} /></TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </Card>
         <div className="stack">
@@ -103,10 +105,10 @@ export default function Dashboard() {
             </div>
           </Card>
           {pending.length > 0 && (
-            <div className="note warn">
+            <Note tone="warn">
               มี {pending.length} ใบรับที่ยังไม่มีราคา มูลค่าสต๊อกจึงคิดจากต้นทุนถัวเฉลี่ยของใบที่มีราคาแล้ว{' '}
-              <button className="link" onClick={() => go({ page: 'receipts', month: 'pending' })}>ไปใส่ราคา</button>
-            </div>
+              <button className={LINK} onClick={() => go({ page: 'receipts', month: 'pending' })}>ไปใส่ราคา</button>
+            </Note>
           )}
         </div>
       </div>

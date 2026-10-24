@@ -3,6 +3,9 @@ import { Card, ConfirmButton, Icon, PageHead, useApp } from '../components/ui';
 import { SHEET_URL } from '../lib/data';
 import { EMPTY, isLocalData } from '../lib/store';
 import { copyText } from './Reports';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function Settings() {
   const { local, update, toast, model } = useApp();
@@ -31,24 +34,24 @@ export default function Settings() {
   return (
     <>
       <PageHead crumb="ตั้งค่า" title="ข้อมูลและการสำรอง" desc="ข้อมูลจากชีตอยู่ในระบบเสมอ ส่วนที่บันทึกเพิ่มเก็บไว้ในเบราว์เซอร์เครื่องนี้" />
-      <div className="grid g-2e">
+      <div className="grid-2e">
         <Card title="ข้อมูลที่บันทึกในเครื่องนี้">
-          <table className="tbl">
-            <tbody>{counts.map(([k, v]) => <tr key={k}><td>{k}</td><td className="r num">{v}</td></tr>)}</tbody>
-          </table>
+          <Table>
+            <TableBody>{counts.map(([k, v]) => <TableRow key={k}><TableCell>{k}</TableCell><TableCell className="text-right num">{v}</TableCell></TableRow>)}</TableBody>
+          </Table>
           <div className="row" style={{ marginTop: 12 }}>
-            <button className="btn" onClick={() => copyText(json, (ok) => toast(ok ? 'คัดลอกข้อมูลสำรองแล้ว' : 'คัดลอกไม่ได้ ให้เลือกข้อความด้านล่างแทน'))}><Icon name="copy" size={16} />คัดลอกข้อมูลสำรอง</button>
+            <Button variant="outline" onClick={() => copyText(json, (ok) => toast(ok ? 'คัดลอกข้อมูลสำรองแล้ว' : 'คัดลอกไม่ได้ ให้เลือกข้อความด้านล่างแทน'))}><Icon name="copy" size={16} />คัดลอกข้อมูลสำรอง</Button>
             <span className="spacer" />
             <ConfirmButton label="ล้างข้อมูลที่บันทึก" onConfirm={() => { update(() => EMPTY); toast('ล้างข้อมูลที่บันทึกแล้ว'); }} />
           </div>
         </Card>
         <Card title="นำเข้าข้อมูลสำรอง" sub="วางข้อความสำรอง หรือเลือกไฟล์ .json">
           <div className="stack">
-            <textarea id="restore-text" className="input num" rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder='{"receipts":[], ...}' />
+            <Textarea id="restore-text" className="num" rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder='{"receipts":[], ...}' />
             <div className="row">
               <input id="restore-file" type="file" accept=".json,application/json" onChange={(e) => { const f = e.target.files?.[0]; if (f) f.text().then(restore); }} />
               <span className="spacer" />
-              <button className="btn pri" disabled={!text.trim()} onClick={() => restore(text)}>นำเข้า</button>
+              <Button disabled={!text.trim()} onClick={() => restore(text)}>นำเข้า</Button>
             </div>
             <p className="muted" style={{ margin: 0, fontSize: 13 }}>การนำเข้าจะแทนที่ข้อมูลที่บันทึกในเครื่องนี้ทั้งหมด</p>
           </div>
@@ -57,7 +60,7 @@ export default function Settings() {
       <Card title="แหล่งข้อมูลต้นฉบับ">
         <div className="stack">
           <p style={{ margin: 0 }}>บัญชีรับส่งสินค้า สหมิตร เริ่มเดือนมิถุนายน 2569 · ใบรับ {model.receipts.filter((r) => r.source === 'sheet').length} ใบ</p>
-          <div className="row"><a className="btn" href={SHEET_URL} target="_blank" rel="noreferrer"><Icon name="ext" size={16} />เปิด Google Sheet</a></div>
+          <div className="row"><Button variant="outline" asChild><a href={SHEET_URL} target="_blank" rel="noreferrer"><Icon name="ext" size={16} />เปิด Google Sheet</a></Button></div>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>อัปเดตข้อมูลจากชีต: รันสคริปต์ <code>stock/data/parse_sheet.py</code> กับข้อความที่ส่งออกจากชีต แล้ว build ใหม่</p>
         </div>
       </Card>

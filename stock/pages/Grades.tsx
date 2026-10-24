@@ -1,9 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Bar, Card, Icon, Kpi, PageHead, ReceiptLink, SupplierLink, gradeColor, useApp } from '../components/ui';
+import { Bar, Card, gradeColor, Icon, Kpi, PageHead, Pill, ReceiptLink, SupplierLink, useApp } from '../components/ui';
 import { FAMILY_ORDER } from '../lib/data';
 import { baht, kg, thDate } from '../lib/format';
 import { AdjustDrawer } from './Stock';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const KIND: Record<string, string> = { receipt: 'รับเข้า', issue: 'จ่ายออก', 'sort-in': 'ได้จากคัด', 'sort-out': 'นำไปคัด', adjust: 'ปรับยอด' };
 
@@ -33,7 +36,7 @@ export default function Grades() {
     <>
       <PageHead crumb="สินค้า" title="เกรดสินค้า" desc="เลือกเกรดเพื่อดูบัตรสต๊อก ราคา และผู้ขายที่ส่งเกรดนี้" />
       <Card pad={false}>
-        <div className="card-b stack" style={{ gap: 10 }}>
+        <div className="stack px-4" style={{ gap: 10 }}>
           {FAMILY_ORDER.map((f) => {
             const list = model.grades.filter((x) => x.family === f && (x.received > 0 || x.balance !== 0 || x.sortedIn > 0));
             if (!list.length) return null;
@@ -42,9 +45,11 @@ export default function Grades() {
                 <span className="muted" style={{ width: 90, fontSize: 13, paddingTop: 2 }}>{f}</span>
                 <div className="chips" style={{ flex: 1 }}>
                   {list.map((x) => (
-                    <button key={x.grade} className="chip plain" style={x.grade === selected ? { background: 'var(--leaf)', color: '#fff', borderColor: 'var(--leaf)' } : undefined} onClick={() => go({ page: 'grades', grade: x.grade })}>
+                    <Badge key={x.grade} asChild variant={x.grade === selected ? 'default' : 'outline'} className="cursor-pointer">
+                    <button onClick={() => go({ page: 'grades', grade: x.grade })} aria-pressed={x.grade === selected}>
                       <i className="dot" style={{ background: gradeColor(x.grade) }} />{x.grade}
                     </button>
+                  </Badge>
                   ))}
                 </div>
               </div>
@@ -55,19 +60,19 @@ export default function Grades() {
 
       <div className="row">
         <h2 style={{ fontSize: '1.35rem' }}><i className="dot" style={{ background: gradeColor(selected), width: 14, height: 14, marginRight: 8 }} />{selected}</h2>
-        <span className="chip plain">{g.family}</span>
+        <Badge variant="outline">{g.family}</Badge>
         <span className="spacer" />
-        <button className="btn sm" onClick={() => go({ page: 'receipts', grade: selected })}>ใบรับที่มีเกรดนี้</button>
-        <button className="btn sm" onClick={() => setAdjust(true)}><Icon name="scale" size={14} />ปรับยอด</button>
+        <Button variant="outline" size="sm" onClick={() => go({ page: 'receipts', grade: selected })}>ใบรับที่มีเกรดนี้</Button>
+        <Button variant="outline" size="sm" onClick={() => setAdjust(true)}><Icon name="scale" size={14} />ปรับยอด</Button>
       </div>
-      <div className="grid g-kpi">
+      <div className="grid-kpi">
         <Kpi hero label="คงเหลือ" value={kg(g.balance)} unit="กก." sub={`มูลค่า ≈ ${baht(g.value)} บาท`} />
         <Kpi label="รับเข้าสะสม" value={kg(g.received)} unit="กก." sub={`${g.receiptCount} ใบรับ · ${g.suppliers.length} ผู้ขาย`} />
         <Kpi label="ต้นทุนเฉลี่ย" value={g.avgCost ? baht(g.avgCost) : '–'} unit="บาท/กก." sub="ถัวเฉลี่ยถ่วงน้ำหนัก" />
         <Kpi label="ราคารับซื้อล่าสุด" value={g.lastPrice ? baht(g.lastPrice) : '–'} unit="บาท/กก." />
       </div>
 
-      <div className="grid g-2">
+      <div className="grid-2">
         <Card title="ราคารับซื้อต่อกิโลกรัม" sub="ทุกบรรทัดราคาในใบรับ เรียงตามวันที่">
           {prices.length > 1 ? (
             <div style={{ height: 250 }}>
@@ -97,23 +102,23 @@ export default function Grades() {
       </div>
 
       <Card title="บัตรสต๊อก (ความเคลื่อนไหว)" sub={`${ledger.length} รายการ ล่าสุดอยู่บน`} pad={false}>
-        <div className="tbl-wrap scroll-y" style={{ marginTop: 10 }}>
-          <table className="tbl">
-            <thead><tr><th>วันที่</th><th>ประเภท</th><th>เอกสาร</th><th>คู่ค้า / รายละเอียด</th><th className="r">เข้า</th><th className="r">ออก</th><th className="r">คงเหลือ</th></tr></thead>
-            <tbody>
+        <div className="scroll-y" style={{ marginTop: 10 }}>
+          <Table>
+            <TableHeader><TableRow><TableHead>วันที่</TableHead><TableHead>ประเภท</TableHead><TableHead>เอกสาร</TableHead><TableHead>คู่ค้า / รายละเอียด</TableHead><TableHead className="text-right">เข้า</TableHead><TableHead className="text-right">ออก</TableHead><TableHead className="text-right">คงเหลือ</TableHead></TableRow></TableHeader>
+            <TableBody>
               {ledger.map((m, i) => (
-                <tr key={i}>
-                  <td className="num">{thDate(m.date)}</td>
-                  <td><span className={`chip ${m.qty >= 0 ? 'ok' : 'info'}`}>{KIND[m.kind]}</span></td>
-                  <td>{m.kind === 'receipt' ? <ReceiptLink id={m.ref} /> : <span className="num">{m.ref}</span>}</td>
-                  <td>{m.kind === 'receipt' ? <SupplierLink name={m.party} /> : m.party}</td>
-                  <td className="r num">{m.qty > 0 ? kg(m.qty) : ''}</td>
-                  <td className="r num">{m.qty < 0 ? kg(-m.qty) : ''}</td>
-                  <td className="r num" style={{ fontWeight: 600 }}>{kg(m.bal)}</td>
-                </tr>
+                <TableRow key={i}>
+                  <TableCell className="num">{thDate(m.date)}</TableCell>
+                  <TableCell><Pill tone={m.qty >= 0 ? 'ok' : 'info'}>{KIND[m.kind]}</Pill></TableCell>
+                  <TableCell>{m.kind === 'receipt' ? <ReceiptLink id={m.ref} /> : <span className="num">{m.ref}</span>}</TableCell>
+                  <TableCell>{m.kind === 'receipt' ? <SupplierLink name={m.party} /> : m.party}</TableCell>
+                  <TableCell className="text-right num">{m.qty > 0 ? kg(m.qty) : ''}</TableCell>
+                  <TableCell className="text-right num">{m.qty < 0 ? kg(-m.qty) : ''}</TableCell>
+                  <TableCell className="text-right num" style={{ fontWeight: 600 }}>{kg(m.bal)}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </Card>
       {adjust && <AdjustDrawer grade={selected} onClose={() => setAdjust(false)} />}

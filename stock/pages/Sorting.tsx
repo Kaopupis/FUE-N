@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { Card, ConfirmButton, Drawer, Empty, GradeChip, Icon, PageHead, useApp } from '../components/ui';
+import { Card, ConfirmButton, Drawer, Empty, GradeChip, Icon, Note, PageHead, Pill, useApp } from '../components/ui';
 import { nextDocId } from '../lib/calc';
 import { kg, round2, thDate, todayISO } from '../lib/format';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // คัดแยกเกรด: ตามชีต "คัดแยกเกรด & Stock คงเหลือ" — น้ำหนักก่อนคัดแยก → น้ำหนักหลังคัดแยก
 export default function Sorting() {
@@ -14,35 +19,35 @@ export default function Sorting() {
         crumb="คัดแยก"
         title="คัดแยกเกรด"
         desc="ย้ายน้ำหนักจากเกรดต้นทางไปยังเกรดที่คัดได้ ส่วนต่างบันทึกเป็นน้ำหนักสูญเสีย"
-        actions={<button className="btn pri" onClick={() => setForm(true)}><Icon name="plus" size={16} />บันทึกการคัด</button>}
+        actions={<Button onClick={() => setForm(true)}><Icon name="plus" size={16} />บันทึกการคัด</Button>}
       />
       <Card pad={false}>
-        <div className="tbl-wrap">
-          <table className="tbl">
-            <thead><tr><th>เลขที่</th><th>วันที่คัด</th><th>เกรดต้นทาง</th><th className="r">นน.ก่อนคัด</th><th>ผลการคัด</th><th className="r">นน.หลังคัด</th><th className="r">สูญเสีย</th><th /></tr></thead>
-            <tbody>
+        <div>
+          <Table>
+            <TableHeader><TableRow><TableHead>เลขที่</TableHead><TableHead>วันที่คัด</TableHead><TableHead>เกรดต้นทาง</TableHead><TableHead className="text-right">นน.ก่อนคัด</TableHead><TableHead>ผลการคัด</TableHead><TableHead className="text-right">นน.หลังคัด</TableHead><TableHead className="text-right">สูญเสีย</TableHead><TableHead /></TableRow></TableHeader>
+            <TableBody>
               {rows.map((s) => {
                 const out = s.outputs.reduce((a, o) => a + o.net, 0);
                 const loss = s.input - out;
                 return (
-                  <tr key={s.id}>
-                    <td className="num">{s.id}</td>
-                    <td className="num">{thDate(s.date)}</td>
-                    <td><GradeChip g={s.fromGrade} /></td>
-                    <td className="r num">{kg(s.input)}</td>
-                    <td><div className="chips">{s.outputs.map((o) => <GradeChip key={o.grade} g={o.grade} kg={kg(o.net)} />)}</div></td>
-                    <td className="r num">{kg(out)}</td>
-                    <td className="r num"><span className={`chip ${loss / s.input > 0.02 ? 'bad' : 'plain'}`}>{kg(loss)} ({((loss / s.input) * 100).toFixed(1)}%)</span></td>
-                    <td className="r"><ConfirmButton small onConfirm={() => { update((d) => ({ ...d, sorts: d.sorts.filter((x) => x.id !== s.id) })); toast(`ลบ ${s.id} แล้ว`); }} /></td>
-                  </tr>
+                  <TableRow key={s.id}>
+                    <TableCell className="num">{s.id}</TableCell>
+                    <TableCell className="num">{thDate(s.date)}</TableCell>
+                    <TableCell><GradeChip g={s.fromGrade} /></TableCell>
+                    <TableCell className="text-right num">{kg(s.input)}</TableCell>
+                    <TableCell><div className="chips">{s.outputs.map((o) => <GradeChip key={o.grade} g={o.grade} kg={kg(o.net)} />)}</div></TableCell>
+                    <TableCell className="text-right num">{kg(out)}</TableCell>
+                    <TableCell className="text-right num"><Pill tone={loss / s.input > 0.02 ? 'bad' : 'plain'}>{kg(loss)} ({((loss / s.input) * 100).toFixed(1)}%)</Pill></TableCell>
+                    <TableCell className="text-right"><ConfirmButton small onConfirm={() => { update((d) => ({ ...d, sorts: d.sorts.filter((x) => x.id !== s.id) })); toast(`ลบ ${s.id} แล้ว`); }} /></TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
           {!rows.length && (
             <Empty>
               <p>ยังไม่มีการคัดแยก เช่น นำ “ปอก” 1,000 กก. มาคัดเป็น ปอก/ช็อต/ใหญ่</p>
-              <button className="btn pri" onClick={() => setForm(true)}><Icon name="plus" size={16} />บันทึกการคัดครั้งแรก</button>
+              <Button onClick={() => setForm(true)}><Icon name="plus" size={16} />บันทึกการคัดครั้งแรก</Button>
             </Empty>
           )}
         </div>
@@ -75,30 +80,30 @@ function SortForm({ onClose }: { onClose: () => void }) {
   };
   return (
     <Drawer title="บันทึกการคัดแยกเกรด" onClose={onClose}>
-      <div className="card card-b stack">
+      <div className="panel stack">
         <div className="form-grid">
-          <div className="field"><label htmlFor="s-date">วันที่คัด</label><input id="s-date" className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-          <div className="field"><label htmlFor="s-from">เกรดต้นทาง</label><select id="s-from" className="input" value={from} onChange={(e) => setFrom(e.target.value)}>{avail.map((g) => <option key={g.grade}>{g.grade}</option>)}</select></div>
-          <div className="field"><label htmlFor="s-in">น้ำหนักก่อนคัด (กก.)</label><input id="s-in" className="input num" inputMode="decimal" value={input} onChange={(e) => setInput(e.target.value)} /></div>
+          <div className="field"><Label htmlFor="s-date">วันที่คัด</Label><Input id="s-date"  type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+          <div className="field"><Label htmlFor="s-from">เกรดต้นทาง</Label><NativeSelect id="s-from" value={from} onChange={(e) => setFrom(e.target.value)}>{avail.map((g) => <option key={g.grade}>{g.grade}</option>)}</NativeSelect></div>
+          <div className="field"><Label htmlFor="s-in">น้ำหนักก่อนคัด (กก.)</Label><Input id="s-in" className="num text-right" inputMode="decimal" value={input} onChange={(e) => setInput(e.target.value)} /></div>
         </div>
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>คงเหลือ {from}: <b className="num">{kg(model.gradeByName.get(from)?.balance ?? 0)}</b> กก.</p>
       </div>
-      <div className="card card-b stack">
+      <div className="panel stack">
         <h3>น้ำหนักหลังคัดแยก</h3>
         <datalist id="sort-grade-list">{model.grades.map((g) => <option key={g.grade} value={g.grade} />)}</datalist>
         {outs.map((o, i) => (
           <div key={i} className="row">
-            <input id={`so-g-${i}`} className="input" list="sort-grade-list" style={{ flex: '1 1 140px', width: 'auto' }} value={o.grade} onChange={(e) => setOuts((x) => x.map((y, j) => (j === i ? { ...y, grade: e.target.value } : y)))} />
-            <input id={`so-n-${i}`} className="input num" style={{ flex: '1 1 120px', width: 'auto' }} inputMode="decimal" placeholder="กก." value={o.net} onChange={(e) => setOuts((x) => x.map((y, j) => (j === i ? { ...y, net: e.target.value } : y)))} />
-            <button className="iconbtn" aria-label="ลบแถว" onClick={() => setOuts((x) => x.filter((_, j) => j !== i))}><Icon name="close" size={15} /></button>
+            <Input id={`so-g-${i}`}  list="sort-grade-list" style={{ flex: '1 1 140px', width: 'auto' }} value={o.grade} onChange={(e) => setOuts((x) => x.map((y, j) => (j === i ? { ...y, grade: e.target.value } : y)))} />
+            <Input id={`so-n-${i}`} className="num text-right" style={{ flex: '1 1 120px', width: 'auto' }} inputMode="decimal" placeholder="กก." value={o.net} onChange={(e) => setOuts((x) => x.map((y, j) => (j === i ? { ...y, net: e.target.value } : y)))} />
+            <Button variant="ghost" size="icon" aria-label="ลบแถว" onClick={() => setOuts((x) => x.filter((_, j) => j !== i))}><Icon name="close" size={15} /></Button>
           </div>
         ))}
-        <button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => setOuts((x) => [...x, { grade: 'ใหญ่', net: '' }])}><Icon name="plus" size={14} />เพิ่มเกรด</button>
-        <div className="note">ก่อนคัด <b className="num">{kg(inN)}</b> · หลังคัด <b className="num">{kg(outN)}</b> · สูญเสีย <b className="num">{kg(inN - outN)}</b> กก. {inN ? `(${(((inN - outN) / inN) * 100).toFixed(2)}%)` : ''}</div>
-        <div className="field"><label htmlFor="s-note">หมายเหตุ</label><input id="s-note" className="input" value={note} onChange={(e) => setNote(e.target.value)} /></div>
+        <Button variant="outline" size="sm" style={{ alignSelf: 'flex-start' }} onClick={() => setOuts((x) => [...x, { grade: 'ใหญ่', net: '' }])}><Icon name="plus" size={14} />เพิ่มเกรด</Button>
+        <Note>ก่อนคัด <b className="num">{kg(inN)}</b> · หลังคัด <b className="num">{kg(outN)}</b> · สูญเสีย <b className="num">{kg(inN - outN)}</b> กก. {inN ? `(${(((inN - outN) / inN) * 100).toFixed(2)}%)` : ''}</Note>
+        <div className="field"><Label htmlFor="s-note">หมายเหตุ</Label><Input id="s-note"  value={note} onChange={(e) => setNote(e.target.value)} /></div>
       </div>
-      {err && <div className="note warn">{err}</div>}
-      <div className="row"><span className="spacer" /><button className="btn" onClick={onClose}>ยกเลิก</button><button className="btn pri" onClick={save}>บันทึกการคัด</button></div>
+      {err && <Note tone="warn">{err}</Note>}
+      <div className="row"><span className="spacer" /><Button variant="outline" onClick={onClose}>ยกเลิก</Button><Button onClick={save}>บันทึกการคัด</Button></div>
     </Drawer>
   );
 }

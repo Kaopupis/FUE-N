@@ -5,7 +5,10 @@ import { ForcedPasswordScreen, LoginScreen } from './components/Auth';
 import { ApiError, api, type User } from './lib/api';
 import { type RawReceipt, parseSheetReceipts } from './lib/data';
 import type { Receipt } from './lib/types';
+import { Toaster } from '@/components/ui/sonner';
 import './styles.css';
+import { Button } from '@/components/ui/button';
+import { Note } from './components/ui';
 
 type State =
   | { s: 'loading' }
@@ -47,10 +50,10 @@ function Root() {
   if (st.s === 'error')
     return (
       <div className="auth-wrap">
-        <div className="auth-card card stack">
+        <div className="auth-card stack rounded-xl border bg-card p-6 shadow-sm">
           <h1 style={{ fontSize: '1.2rem' }}>เปิดระบบไม่สำเร็จ</h1>
-          <div className="note warn">{st.message}</div>
-          <button className="btn pri" onClick={() => location.reload()}>ลองอีกครั้ง</button>
+          <Note tone="warn">{st.message}</Note>
+          <Button onClick={() => location.reload()}>ลองอีกครั้ง</Button>
         </div>
       </div>
     );
@@ -63,5 +66,6 @@ function Root() {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Root />
+    <Toaster position="bottom-center" richColors />
   </React.StrictMode>,
 );

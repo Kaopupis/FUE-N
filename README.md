@@ -2,6 +2,9 @@
 
 ระบบสต๊อกสหมิตร: สต๊อกสินค้าทองแดง/เศษโลหะ (โค้ดอยู่ในโฟลเดอร์ `stock/`)
 
+หน้าจอใช้ [shadcn/ui](https://ui.shadcn.com/) (สไตล์ new-york, Tailwind CSS v4, ไอคอน lucide) ธีมโทนเขียว-ขาว
+คอมโพเนนต์อยู่ที่ `stock/components/ui/` ตั้งค่าใน `components.json` และสีธีมใน `stock/styles.css`
+
 - เว็บ: https://stock-sahamit.pages.dev/
 - Repo: https://github.com/Kaopupis/stock-sahamit
 
