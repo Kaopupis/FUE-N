@@ -2,6 +2,7 @@
 
 export interface Env {
   DB: D1Database;
+  PHOTOS?: R2Bucket; // รูปพนักงาน (R2)
   ADMIN_USERNAME?: string;
   ADMIN_PASSWORD?: string; // ตั้งเป็น secret ใช้สร้างผู้ดูแลคนแรกเมื่อยังไม่มีผู้ใช้
   SESSION_TTL_HOURS?: string;

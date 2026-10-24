@@ -14,3 +14,8 @@ binding = "DB"
 database_name = "stock-sahamit-db"
 database_id = "fa082caa-93be-47f6-aeb9-507166d6d1a2"
 migrations_dir = "migrations"
+
+# รูปพนักงาน: เปิด R2 ใน dashboard แล้วสร้าง bucket ชื่อนี้ก่อน deploy
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "stock-sahamit-photos"

@@ -100,7 +100,8 @@ export type Page =
   | 'relations'
   | 'reports'
   | 'settings'
-  | 'users';
+  | 'users'
+  | 'employees';
 
 // เป้าหมายการนำทางข้ามหน้า (ความสัมพันธ์ของข้อมูล)
 export interface NavTarget {

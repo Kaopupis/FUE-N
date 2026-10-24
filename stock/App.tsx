@@ -17,11 +17,12 @@ import Sorting from './pages/Sorting';
 import Stock from './pages/Stock';
 import Suppliers from './pages/Suppliers';
 import Users from './pages/Users';
+import Employees from './pages/Employees';
 
 const MENU: { sec: string; items: { page: Page; label: string }[] }[] = [
   { sec: 'ภาพรวม', items: [{ page: 'dashboard', label: 'แดชบอร์ด' }, { page: 'stock', label: 'สต๊อกคงเหลือ' }] },
   { sec: 'เอกสาร', items: [{ page: 'receipts', label: 'รับสินค้าเข้า' }, { page: 'issues', label: 'จ่ายออก / ขาย' }, { page: 'sorting', label: 'คัดแยกเกรด' }] },
-  { sec: 'ข้อมูลหลัก', items: [{ page: 'grades', label: 'เกรดสินค้า' }, { page: 'suppliers', label: 'ผู้ขาย / คู่ค้า' }, { page: 'relations', label: 'ความสัมพันธ์ข้อมูล' }] },
+  { sec: 'ข้อมูลหลัก', items: [{ page: 'grades', label: 'เกรดสินค้า' }, { page: 'suppliers', label: 'ผู้ขาย / คู่ค้า' }, { page: 'employees', label: 'พนักงาน' }, { page: 'relations', label: 'ความสัมพันธ์ข้อมูล' }] },
   { sec: 'สรุปผล', items: [{ page: 'reports', label: 'รายงาน' }, { page: 'settings', label: 'ข้อมูลและการสำรอง' }] },
   { sec: 'ระบบ', items: [{ page: 'users', label: 'ผู้ใช้งาน' }] },
 ];
@@ -73,7 +74,7 @@ export default function App({ user, sheet, onLogout, onUserChange }: Props) {
     return () => window.removeEventListener('hashchange', h);
   }, [user]);
 
-  const Page = { dashboard: Dashboard, stock: Stock, receipts: Receipts, issues: Issues, sorting: Sorting, grades: Grades, suppliers: Suppliers, relations: Relations, reports: Reports, settings: Settings, users: Users }[nav.page];
+  const Page = { dashboard: Dashboard, stock: Stock, receipts: Receipts, issues: Issues, sorting: Sorting, grades: Grades, suppliers: Suppliers, relations: Relations, reports: Reports, settings: Settings, users: Users, employees: Employees }[nav.page];
   const title = menu.flatMap((m) => m.items).find((i) => i.page === nav.page)?.label;
 
   return (
