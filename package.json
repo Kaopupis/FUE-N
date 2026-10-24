@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --config vite.stock.config.ts && node -e \"require('fs').cpSync('dist','dist-stock',{recursive:true})\"",
     "preview": "vite preview",
     "stock:dev": "vite --config vite.stock.config.ts",
     "stock:build": "vite build --config vite.stock.config.ts",
-    "stock:preview": "vite preview --config vite.stock.config.ts"
+    "stock:preview": "vite preview --config vite.stock.config.ts",
+    "build:fue-n": "vite build"
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
