@@ -314,3 +314,20 @@ button.chip:hover { border-color: var(--leaf); }
 .side-user-actions button:focus-visible { outline: 2px solid #fff; }
 .side-user + .side-foot { margin-top: 0; }
 .mono { font-family: var(--font-num); letter-spacing: 0.02em; }
+
+/* ---------- พนักงาน ---------- */
+.emp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; padding: 0 16px 16px; }
+.emp-card {
+  all: unset; box-sizing: border-box; cursor: pointer; display: flex; gap: 14px; align-items: center; padding: 12px;
+  border: 1px solid var(--line); border-radius: var(--r); background: var(--paper); min-width: 0;
+}
+.emp-card:hover { border-color: var(--leaf); background: var(--leaf-soft); }
+.emp-card:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+.emp-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.emp-info > b, .emp-info > .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.emp-info .muted { font-size: 0.85rem; }
+.avatar { border-radius: 50%; object-fit: cover; flex: none; background: var(--leaf-soft); border: 2px solid var(--paper); box-shadow: 0 0 0 1px var(--line-2); }
+.avatar-empty { display: inline-grid; place-items: center; color: var(--leaf); font-family: var(--font-display); font-weight: 600; }
+.emp-head { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.photo-box { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px; border-radius: var(--r); border: 2px dashed transparent; }
+.photo-box.drag { border-color: var(--leaf); background: var(--leaf-soft); }

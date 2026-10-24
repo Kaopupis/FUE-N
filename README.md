@@ -18,6 +18,7 @@ npm run build         # ได้ไฟล์ระบบสต๊อกใน d
 - **แดชบอร์ด**: คงเหลือรวม รับเข้ารายเดือน ใบรับล่าสุด ผู้ขายหลัก
 - **สต๊อกคงเหลือ**: ยอดแยกเกรด ต้นทุนเฉลี่ย มูลค่า และปรับยอดตามการตรวจนับ
 - **รับสินค้าเข้า**: ใบรับทั้งหมด (ตาชั่งรถ กระสอบ ราคา VAT) สร้างใบใหม่ และใส่ราคาให้ใบที่รอราคา
+- **พนักงาน**: ข้อมูลพื้นฐานและรูปพนักงาน (รูปเก็บใน Cloudflare R2) ผู้ดูแลเพิ่ม/แก้ไข/อัปโหลดรูปได้ พนักงานดูได้อย่างเดียว
 - **จ่ายออก / ขาย** และ **คัดแยกเกรด**: ตัดยอดหรือย้ายน้ำหนักระหว่างเกรด
 - **เกรดสินค้า**: บัตรสต๊อก กราฟราคา ผู้ขายของแต่ละเกรด
 - **ผู้ขาย / คู่ค้า**: ยอดรับ ยอดซื้อ เกรดที่ส่ง
@@ -41,7 +42,8 @@ npm run build         # ได้ไฟล์ระบบสต๊อกใน d
 | --- | --- |
 | API (Pages Functions) | `functions/api/**` |
 | ตรรกะ login / session / รหัสผ่าน | `server/auth.ts` |
-| ตาราง D1 | `migrations/0001_auth.sql` |
+| ข้อมูลพนักงานและรูป | `functions/api/employees/**`, `server/employees.ts` |
+| ตาราง D1 | `migrations/*.sql` |
 | ตั้งค่า Cloudflare | `wrangler.toml` |
 
 ### Deploy บน Cloudflare Pages
@@ -51,7 +53,8 @@ npm run build         # ได้ไฟล์ระบบสต๊อกใน d
 | ค่า | ตั้งที่ | ความหมาย |
 | --- | --- | --- |
 | Build command `npm run build` · Output `dist` | dashboard / `wrangler.toml` | สร้างเว็บระบบสต๊อก |
-| `DB` → `stock-sahamit-db` | `wrangler.toml` | ฐานข้อมูลผู้ใช้ |
+| `DB` → `stock-sahamit-db` | `wrangler.toml` | ฐานข้อมูลผู้ใช้และพนักงาน |
+| `PHOTOS` → R2 `stock-sahamit-photos` | `wrangler.toml` | รูปพนักงาน (ย่อเหลือไม่เกิน 800px ก่อนอัปโหลด, JPG/PNG/WEBP ไม่เกิน 5 MB) |
 | `ADMIN_USERNAME` | `wrangler.toml` (ค่าเริ่มต้น `admin`) | ชื่อผู้ดูแลคนแรก |
 | `SESSION_TTL_HOURS` | `wrangler.toml` (ค่าเริ่มต้น `12`) | อายุการ login |
 | `ADMIN_PASSWORD` | **Secret** ใน dashboard (Settings → Variables and Secrets) | รหัสผ่านผู้ดูแลคนแรก อย่างน้อย 8 ตัว |
