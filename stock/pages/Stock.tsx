@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { Card, Drawer, GradeChip, Icon, Kpi, PageHead, useApp } from '../components/ui';
+import { Card, Drawer, GradeChip, Icon, Kpi, Note, PageHead, useApp } from '../components/ui';
 import { FAMILY_ORDER } from '../lib/data';
 import { nextDocId } from '../lib/calc';
 import { baht, bahtShort, kg, round2, thDate, todayISO } from '../lib/format';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 export default function Stock() {
   const { model, go } = useApp();
@@ -20,9 +28,9 @@ export default function Stock() {
         crumb="สต๊อก"
         title="สต๊อกคงเหลือ"
         desc="คงเหลือ = รับเข้า + ได้จากคัดแยก − นำไปคัด − จ่ายออก ± ปรับยอด"
-        actions={<button className="btn" onClick={() => setAdjust(true)}><Icon name="scale" size={16} />ปรับยอดสต๊อก</button>}
+        actions={<Button variant="outline" onClick={() => setAdjust(true)}><Icon name="scale" size={16} />ปรับยอดสต๊อก</Button>}
       />
-      <div className="grid g-kpi">
+      <div className="grid-kpi">
         <Kpi hero label="คงเหลือรวม" value={kg(model.totals.balance)} unit="กก." sub={`มูลค่าประมาณ ${bahtShort(model.totals.stockValue)} บาท`} />
         {byFam.map((x) => <Kpi key={x.f} label={x.f} value={kg(x.kg)} unit="กก." onClick={() => setFam(x.f)} sub="กดเพื่อกรอง" />)}
       </div>
@@ -32,47 +40,47 @@ export default function Stock() {
         pad={false}
         right={
           <div className="filters">
-            <div className="seg">
-              {['ทั้งหมด', ...families].map((f) => <button key={f} className={fam === f ? 'on' : ''} onClick={() => setFam(f)}>{f}</button>)}
-            </div>
-            <label className="row" style={{ fontSize: 13, gap: 6 }}><input id="show-zero" type="checkbox" checked={showZero} onChange={(e) => setShowZero(e.target.checked)} />แสดงเกรดที่ไม่มีของ</label>
+            <ToggleGroup type="single" variant="outline" size="sm" value={fam} onValueChange={(v) => v && setFam(v)}>
+              {['ทั้งหมด', ...families].map((f) => <ToggleGroupItem key={f} value={f} className="px-3">{f}</ToggleGroupItem>)}
+            </ToggleGroup>
+            <Label htmlFor="show-zero" className="font-normal"><Checkbox id="show-zero" checked={showZero} onCheckedChange={(v) => setShowZero(v === true)} />แสดงเกรดที่ไม่มีของ</Label>
           </div>
         }
       >
-        <div className="tbl-wrap" style={{ marginTop: 10 }}>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>เกรด</th><th>กลุ่ม</th><th className="r">รับเข้า</th><th className="r">ได้จากคัด</th><th className="r">นำไปคัด</th>
-                <th className="r">จ่ายออก</th><th className="r">ปรับยอด</th><th className="r">คงเหลือ (กก.)</th><th className="r">ต้นทุนเฉลี่ย/กก.</th><th className="r">มูลค่า (บาท)</th><th>เคลื่อนไหวล่าสุด</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div style={{ marginTop: 10 }}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>เกรด</TableHead><TableHead>กลุ่ม</TableHead><TableHead className="text-right">รับเข้า</TableHead><TableHead className="text-right">ได้จากคัด</TableHead><TableHead className="text-right">นำไปคัด</TableHead>
+                <TableHead className="text-right">จ่ายออก</TableHead><TableHead className="text-right">ปรับยอด</TableHead><TableHead className="text-right">คงเหลือ (กก.)</TableHead><TableHead className="text-right">ต้นทุนเฉลี่ย/กก.</TableHead><TableHead className="text-right">มูลค่า (บาท)</TableHead><TableHead>เคลื่อนไหวล่าสุด</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {rows.map((g) => (
-                <tr key={g.grade} className="click" onClick={() => go({ page: 'grades', grade: g.grade })}>
-                  <td><GradeChip g={g.grade} /></td>
-                  <td className="muted">{g.family}</td>
-                  <td className="r num">{kg(g.received)}</td>
-                  <td className="r num muted">{g.sortedIn ? kg(g.sortedIn) : '–'}</td>
-                  <td className="r num muted">{g.sortedOut ? kg(g.sortedOut) : '–'}</td>
-                  <td className="r num muted">{g.issued ? kg(g.issued) : '–'}</td>
-                  <td className="r num muted">{g.adjusted ? kg(g.adjusted) : '–'}</td>
-                  <td className="r num" style={{ fontWeight: 600, color: g.balance < 0 ? 'var(--red)' : undefined }}>{kg(g.balance)}</td>
-                  <td className="r num">{g.avgCost ? baht(g.avgCost) : <span className="chip warn">ไม่มีราคา</span>}</td>
-                  <td className="r num">{baht(g.value)}</td>
-                  <td className="num muted">{g.lastDate ? thDate(g.lastDate) : '–'}</td>
-                </tr>
+                <TableRow key={g.grade} className="click" onClick={() => go({ page: 'grades', grade: g.grade })}>
+                  <TableCell><GradeChip g={g.grade} /></TableCell>
+                  <TableCell className="muted">{g.family}</TableCell>
+                  <TableCell className="text-right num">{kg(g.received)}</TableCell>
+                  <TableCell className="text-right num muted">{g.sortedIn ? kg(g.sortedIn) : '–'}</TableCell>
+                  <TableCell className="text-right num muted">{g.sortedOut ? kg(g.sortedOut) : '–'}</TableCell>
+                  <TableCell className="text-right num muted">{g.issued ? kg(g.issued) : '–'}</TableCell>
+                  <TableCell className="text-right num muted">{g.adjusted ? kg(g.adjusted) : '–'}</TableCell>
+                  <TableCell className="text-right num" style={{ fontWeight: 600, color: g.balance < 0 ? 'var(--destructive)' : undefined }}>{kg(g.balance)}</TableCell>
+                  <TableCell className="text-right num">{g.avgCost ? baht(g.avgCost) : <Badge variant="warning">ไม่มีราคา</Badge>}</TableCell>
+                  <TableCell className="text-right num">{baht(g.value)}</TableCell>
+                  <TableCell className="num muted">{g.lastDate ? thDate(g.lastDate) : '–'}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={2}>รวม {rows.length} เกรด</td>
-                <td className="r num">{kg(sum('received'))}</td><td className="r num">{kg(sum('sortedIn'))}</td><td className="r num">{kg(sum('sortedOut'))}</td>
-                <td className="r num">{kg(sum('issued'))}</td><td className="r num">{kg(sum('adjusted'))}</td><td className="r num">{kg(sum('balance'))}</td>
-                <td /><td className="r num">{baht(sum('value'))}</td><td />
-              </tr>
-            </tfoot>
-          </table>
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={2}>รวม {rows.length} เกรด</TableCell>
+                <TableCell className="text-right num">{kg(sum('received'))}</TableCell><TableCell className="text-right num">{kg(sum('sortedIn'))}</TableCell><TableCell className="text-right num">{kg(sum('sortedOut'))}</TableCell>
+                <TableCell className="text-right num">{kg(sum('issued'))}</TableCell><TableCell className="text-right num">{kg(sum('adjusted'))}</TableCell><TableCell className="text-right num">{kg(sum('balance'))}</TableCell>
+                <TableCell /><TableCell className="text-right num">{baht(sum('value'))}</TableCell><TableCell />
+              </TableRow>
+            </TableFooter>
+          </Table>
         </div>
       </Card>
       {adjust && <AdjustDrawer onClose={() => setAdjust(false)} />}
@@ -98,23 +106,23 @@ export function AdjustDrawer({ onClose, grade }: { onClose: () => void; grade?: 
   };
   return (
     <Drawer title="ปรับยอดสต๊อก" onClose={onClose}>
-      <div className="card card-b stack">
+      <div className="panel stack">
         <div className="form-grid">
-          <div className="field"><label htmlFor="adj-date">วันที่</label><input id="adj-date" className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-          <div className="field"><label htmlFor="adj-grade">เกรด</label>
-            <select id="adj-grade" className="input" value={g} onChange={(e) => setG(e.target.value)}>{model.grades.map((x) => <option key={x.grade}>{x.grade}</option>)}</select>
+          <div className="field"><Label htmlFor="adj-date">วันที่</Label><Input id="adj-date"  type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+          <div className="field"><Label htmlFor="adj-grade">เกรด</Label>
+            <NativeSelect id="adj-grade" value={g} onChange={(e) => setG(e.target.value)}>{model.grades.map((x) => <option key={x.grade}>{x.grade}</option>)}</NativeSelect>
           </div>
         </div>
-        <div className="seg">
-          <button className={mode === 'count' ? 'on' : ''} onClick={() => setMode('count')}>ใส่ยอดนับจริง</button>
-          <button className={mode === 'delta' ? 'on' : ''} onClick={() => setMode('delta')}>เพิ่ม/ลด</button>
-        </div>
+        <ToggleGroup type="single" variant="outline" value={mode} onValueChange={(v) => v && setMode(v as 'count' | 'delta')}>
+          <ToggleGroupItem value="count" className="px-4">ใส่ยอดนับจริง</ToggleGroupItem>
+          <ToggleGroupItem value="delta" className="px-4">เพิ่ม/ลด</ToggleGroupItem>
+        </ToggleGroup>
         <div className="form-grid">
-          <div className="field"><label htmlFor="adj-val">{mode === 'count' ? 'น้ำหนักที่นับได้ (กก.)' : 'จำนวนที่ปรับ (กก. ใส่ลบเพื่อลด)'}</label><input id="adj-val" className="input num" inputMode="decimal" value={val} onChange={(e) => setVal(e.target.value)} placeholder="0.0" /></div>
-          <div className="field"><label htmlFor="adj-reason">เหตุผล</label><input id="adj-reason" className="input" value={reason} onChange={(e) => setReason(e.target.value)} /></div>
+          <div className="field"><Label htmlFor="adj-val">{mode === 'count' ? 'น้ำหนักที่นับได้ (กก.)' : 'จำนวนที่ปรับ (กก. ใส่ลบเพื่อลด)'}</Label><Input id="adj-val" className="num text-right" inputMode="decimal" value={val} onChange={(e) => setVal(e.target.value)} placeholder="0.0" /></div>
+          <div className="field"><Label htmlFor="adj-reason">เหตุผล</Label><Input id="adj-reason"  value={reason} onChange={(e) => setReason(e.target.value)} /></div>
         </div>
-        <div className="note">ยอดในระบบตอนนี้ <b className="num">{kg(cur)}</b> กก. → ปรับ <b className="num">{delta > 0 ? '+' : ''}{kg(delta)}</b> กก. → คงเหลือ <b className="num">{kg(cur + delta)}</b> กก.</div>
-        <div className="row"><span className="spacer" /><button className="btn" onClick={onClose}>ยกเลิก</button><button className="btn pri" disabled={!delta} onClick={save}>บันทึกการปรับยอด</button></div>
+        <Note>ยอดในระบบตอนนี้ <b className="num">{kg(cur)}</b> กก. → ปรับ <b className="num">{delta > 0 ? '+' : ''}{kg(delta)}</b> กก. → คงเหลือ <b className="num">{kg(cur + delta)}</b> กก.</Note>
+        <div className="row"><span className="spacer" /><Button variant="outline" onClick={onClose}>ยกเลิก</Button><Button disabled={!delta} onClick={save}>บันทึกการปรับยอด</Button></div>
       </div>
     </Drawer>
   );

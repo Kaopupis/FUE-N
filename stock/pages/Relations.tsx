@@ -1,7 +1,8 @@
 import React from 'react';
-import { Card, GradeChip, PageHead, useApp } from '../components/ui';
+import { Card, GradeChip, LINK, PageHead, useApp } from '../components/ui';
 import { kg, int } from '../lib/format';
 import type { NavTarget } from '../lib/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Node { key: string; x: number; y: number; title: string; sub: string; num: string; to: NavTarget; core?: boolean }
 const W = 184;
@@ -53,7 +54,7 @@ export default function Relations() {
     <>
       <PageHead crumb="ความสัมพันธ์" title="ความสัมพันธ์ของข้อมูล" desc="ข้อมูลแต่ละส่วนเชื่อมกันอย่างไร กดกล่องเพื่อไปยังเมนูนั้น" />
       <Card title="ผังข้อมูล" sub="ตัวเลขในกล่องคือจำนวนข้อมูลจริงในระบบตอนนี้">
-        <div className="tbl-wrap">
+        <div>
           <svg className="er" viewBox="0 0 1004 530" style={{ minWidth: 760 }} role="img" aria-label="ผังความสัมพันธ์ของข้อมูลสต๊อก">
             <defs>
               <marker id="arr" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -75,41 +76,41 @@ export default function Relations() {
       </Card>
 
       <Card title="ผู้ขาย × เกรด" sub="น้ำหนักรับเข้าสะสม (กก.) · สีเข้มคือส่งมาก · กดช่องเพื่อดูใบรับที่เกี่ยวข้อง" pad={false}>
-        <div className="tbl-wrap" style={{ marginTop: 10 }}>
-          <table className="tbl heat">
-            <thead>
-              <tr><th>ผู้ขาย</th>{cols.map((g) => <th key={g} className="r rot"><GradeChip g={g} /></th>)}<th className="r">รวม</th></tr>
-            </thead>
-            <tbody>
+        <div style={{ marginTop: 10 }}>
+          <Table className="heat">
+            <TableHeader>
+              <TableRow><TableHead>ผู้ขาย</TableHead>{cols.map((g) => <TableHead key={g} className="r rot"><GradeChip g={g} /></TableHead>)}<TableHead className="text-right">รวม</TableHead></TableRow>
+            </TableHeader>
+            <TableBody>
               {model.suppliers.map((s) => (
-                <tr key={s.name} className={nav.supplier === s.name ? 'sel' : ''}>
-                  <td><button className="link" onClick={() => go({ page: 'suppliers', supplier: s.name })}>{s.name}</button></td>
+                <TableRow key={s.name} className={nav.supplier === s.name ? 'sel' : ''}>
+                  <TableCell><button className={LINK} onClick={() => go({ page: 'suppliers', supplier: s.name })}>{s.name}</button></TableCell>
                   {cols.map((g) => {
                     const v = s.grades[g] || 0;
                     const a = v ? 0.12 + 0.78 * Math.sqrt(v / maxCell) : 0;
                     return (
-                      <td
+                      <TableCell
                         key={g}
                         className="cell"
-                        style={{ background: v ? `color-mix(in srgb, var(--leaf) ${Math.round(a * 100)}%, transparent)` : undefined, color: a > 0.55 ? '#fff' : undefined }}
+                        style={{ background: v ? `color-mix(in srgb, var(--primary) ${Math.round(a * 100)}%, transparent)` : undefined, color: a > 0.55 ? '#fff' : undefined }}
                         onClick={() => v && go({ page: 'receipts', supplier: s.name, grade: g })}
                         title={v ? `${s.name} · ${g}: ${kg(v)} กก.` : undefined}
                       >
                         {v ? kg(v) : <span className="muted">·</span>}
-                      </td>
+                      </TableCell>
                     );
                   })}
-                  <td className="r num" style={{ fontWeight: 600 }}>{kg(s.kg)}</td>
-                </tr>
+                  <TableCell className="text-right num" style={{ fontWeight: 600 }}>{kg(s.kg)}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </Card>
 
-      <div className="grid g-2e">
+      <div className="grid-2e">
         <Card title="กฎการคำนวณ">
-          <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 6, color: 'var(--ink-2)' }}>
+          <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 6, color: 'var(--muted-foreground)' }}>
             <li>นน.สุทธิกระสอบ = นน.ก่อน (ชั่งเข้า) − นน. เต๋า/กระสอบ</li>
             <li>สต๊อกรับเข้า = ผลรวม นน.สุทธิกระสอบแยกเกรด (ใบที่ไม่มีกระสอบใช้น้ำหนักในบรรทัดราคา)</li>
             <li>ราคารวม = นน.สุทธิ × ราคา/กก. · รวม VAT = ราคารวม × 1.07 (ยกเว้นผู้ขาย No VAT)</li>
@@ -118,7 +119,7 @@ export default function Relations() {
           </ul>
         </Card>
         <Card title="แหล่งข้อมูล">
-          <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 6, color: 'var(--ink-2)' }}>
+          <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 6, color: 'var(--muted-foreground)' }}>
             <li>ชีต “ใบรับสินค้า(เข้า)” → ใบรับ ตาชั่งรถ กระสอบ และราคา ({model.receipts.filter((r) => r.source === 'sheet').length} ใบ)</li>
             <li>ชีต “คัดแยกเกรด &amp; Stock คงเหลือ” → รายชื่อเกรด และขั้นตอนคัดแยก</li>
             <li>ข้อมูลที่บันทึกในระบบนี้ (ใบรับใหม่ ราคา จ่ายออก คัดแยก ปรับยอด) เก็บในเบราว์เซอร์ สำรอง/ย้ายเครื่องได้ที่เมนูตั้งค่า</li>

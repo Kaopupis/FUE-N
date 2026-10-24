@@ -1,4 +1,15 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["stock", "vite.stock.config.ts"]
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./stock/*"
+      ]
+    }
+  },
+  "include": [
+    "stock",
+    "vite.stock.config.ts"
+  ]
 }

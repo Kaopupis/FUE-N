@@ -1,11 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Card, ConfirmButton, Drawer, Empty, Icon, PageHead, useApp } from '../components/ui';
+import { Card, ConfirmButton, Drawer, Empty, Icon, Note, PageHead, Pill, useApp, type Tone } from '../components/ui';
 import { ApiError, type Employee, type EmployeeStatus, STATUS_LABEL, api, shrinkImage, uploadPhoto } from '../lib/api';
 import { thDateLong } from '../lib/format';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Textarea } from '@/components/ui/textarea';
 
 const fullName = (e: Employee) => `${e.firstName} ${e.lastName}`.trim();
 const initials = (e: Employee) => (e.nickname || e.firstName).slice(0, 2);
-const STATUS_CHIP: Record<EmployeeStatus, string> = { active: 'ok', leave: 'warn', resigned: 'plain' };
+const STATUS_CHIP: Record<EmployeeStatus, Tone> = { active: 'ok', leave: 'warn', resigned: 'plain' };
 
 // อายุงานแบบ ปี/เดือน
 function tenure(start: string | null) {
@@ -19,12 +26,12 @@ function tenure(start: string | null) {
   return y ? `${y} ปี ${m % 12} เดือน` : `${m} เดือน`;
 }
 
-function Avatar({ e, size = 56 }: { e: Employee; size?: number }) {
-  const [broken, setBroken] = useState(false);
-  return e.photoUrl && !broken ? (
-    <img className="avatar" src={e.photoUrl} alt={`รูป ${fullName(e)}`} width={size} height={size} style={{ width: size, height: size }} onError={() => setBroken(true)} />
-  ) : (
-    <span className="avatar avatar-empty" style={{ width: size, height: size, fontSize: size * 0.34 }} aria-hidden="true">{initials(e)}</span>
+function EmpAvatar({ e, size = 56 }: { e: Employee; size?: number }) {
+  return (
+    <Avatar className="border-2 border-card ring-1 ring-input" style={{ width: size, height: size }}>
+      {e.photoUrl && <AvatarImage src={e.photoUrl} alt={`รูป ${fullName(e)}`} className="object-cover" />}
+      <AvatarFallback className="bg-accent font-heading font-semibold text-primary" style={{ fontSize: size * 0.34 }}>{initials(e)}</AvatarFallback>
+    </Avatar>
   );
 }
 
@@ -79,34 +86,34 @@ export default function Employees() {
         crumb="ข้อมูลหลัก"
         title="ข้อมูลพนักงาน"
         desc={`ทำงานอยู่ ${counts.active} คน · ลาพัก ${counts.leave} · ลาออก ${counts.resigned}`}
-        actions={admin && <button className="btn pri" onClick={() => setOpen('new')}><Icon name="plus" size={16} />เพิ่มพนักงาน</button>}
+        actions={admin && <Button onClick={() => setOpen('new')}><Icon name="plus" size={16} />เพิ่มพนักงาน</Button>}
       />
-      {err && <div className="note warn">{err}</div>}
-      {!photosEnabled && admin && <div className="note warn">ยังไม่ได้ผูกที่เก็บรูป R2 (binding ชื่อ PHOTOS) จึงยังอัปโหลดรูปไม่ได้ ข้อมูลอื่นบันทึกได้ตามปกติ</div>}
+      {err && <Note tone="warn">{err}</Note>}
+      {!photosEnabled && admin && <Note tone="warn">ยังไม่ได้ผูกที่เก็บรูป R2 (binding ชื่อ PHOTOS) จึงยังอัปโหลดรูปไม่ได้ ข้อมูลอื่นบันทึกได้ตามปกติ</Note>}
       <Card pad={false}>
-        <div className="card-b filters">
-          <input id="emp-search" className="input search" placeholder="ค้นหาชื่อ ชื่อเล่น รหัส ตำแหน่ง หรือเบอร์โทร" value={q} onChange={(e) => setQ(e.target.value)} />
-          <select id="emp-status" className="input" value={status} onChange={(e) => setStatus(e.target.value as EmployeeStatus | '')}>
+        <div className="filters px-4">
+          <Input id="emp-search" className="search" placeholder="ค้นหาชื่อ ชื่อเล่น รหัส ตำแหน่ง หรือเบอร์โทร" value={q} onChange={(e) => setQ(e.target.value)} />
+          <NativeSelect id="emp-status" value={status} onChange={(e) => setStatus(e.target.value as EmployeeStatus | '')}>
             <option value="">ทุกสถานะ</option>
             {(Object.keys(STATUS_LABEL) as EmployeeStatus[]).map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-          </select>
+          </NativeSelect>
           {depts.length > 0 && (
-            <select id="emp-dept" className="input" value={dept} onChange={(e) => setDept(e.target.value)}>
+            <NativeSelect id="emp-dept" value={dept} onChange={(e) => setDept(e.target.value)}>
               <option value="">ทุกแผนก</option>
               {depts.map((d) => <option key={d}>{d}</option>)}
-            </select>
+            </NativeSelect>
           )}
         </div>
-        <div className="emp-grid">
+        <div className="emp-grid px-4">
           {rows.map((e) => (
             <button key={e.id} className="emp-card" onClick={() => setOpen(e)}>
-              <Avatar e={e} size={64} />
+              <EmpAvatar e={e} size={64} />
               <span className="emp-info">
                 <b>{fullName(e)}{e.nickname && <span className="muted"> ({e.nickname})</span>}</b>
                 <span className="muted">{[e.position, e.department].filter(Boolean).join(' · ') || 'ยังไม่ระบุตำแหน่ง'}</span>
                 <span className="row" style={{ gap: 6 }}>
-                  <span className={`chip ${STATUS_CHIP[e.status]}`}>{STATUS_LABEL[e.status]}</span>
-                  {e.code && <span className="chip plain num">{e.code}</span>}
+                  <Pill tone={STATUS_CHIP[e.status]}>{STATUS_LABEL[e.status]}</Pill>
+                  {e.code && <Badge variant="outline" className="num">{e.code}</Badge>}
                 </span>
               </span>
             </button>
@@ -116,7 +123,7 @@ export default function Employees() {
         {list && !rows.length && (
           <Empty>
             {list.length ? 'ไม่พบพนักงานที่ตรงกับตัวกรอง' : 'ยังไม่มีข้อมูลพนักงาน'}
-            {admin && !list.length && <p><button className="btn pri" onClick={() => setOpen('new')}><Icon name="plus" size={16} />เพิ่มพนักงานคนแรก</button></p>}
+            {admin && !list.length && <p><Button onClick={() => setOpen('new')}><Icon name="plus" size={16} />เพิ่มพนักงานคนแรก</Button></p>}
           </Empty>
         )}
       </Card>
@@ -239,19 +246,19 @@ function EmployeeDrawer({ e, admin, photosEnabled, onClose, onSaved, onDeleted }
       onDrop={(ev) => { ev.preventDefault(); setDrag(false); if (admin && photosEnabled) pick(ev.dataTransfer.files[0]); }}
     >
       {pending ? (
-        <img className="avatar" src={pending.url} alt="รูปที่เลือก" style={{ width: 140, height: 140 }} />
+        <Avatar className="size-[140px] border-2 border-card ring-1 ring-input"><AvatarImage src={pending.url} alt="รูปที่เลือก" className="object-cover" /></Avatar>
       ) : e ? (
-        <Avatar e={e} size={140} />
+        <EmpAvatar e={e} size={140} />
       ) : (
-        <span className="avatar avatar-empty" style={{ width: 140, height: 140 }}><Icon name="employees" size={44} /></span>
+        <Avatar className="size-[140px] ring-1 ring-input"><AvatarFallback className="bg-accent text-primary"><Icon name="employees" size={44} /></AvatarFallback></Avatar>
       )}
       {admin && photosEnabled && (
         <div className="stack" style={{ gap: 6, alignItems: 'center' }}>
           <input ref={fileRef} id="emp-photo" type="file" accept="image/jpeg,image/png,image/webp,image/heic" hidden onChange={(ev) => { pick(ev.target.files?.[0]); ev.target.value = ''; }} />
           <div className="row" style={{ justifyContent: 'center', gap: 6 }}>
-            <button type="button" className="btn sm" onClick={() => fileRef.current?.click()}>{e?.photoUrl || pending ? 'เปลี่ยนรูป' : 'เลือกรูป'}</button>
-            {pending && !editing && <button type="button" className="btn sm pri" disabled={uploading} onClick={uploadNow}>{uploading ? 'กำลังอัปโหลด…' : 'อัปโหลดรูปนี้'}</button>}
-            {pending && <button type="button" className="btn sm ghost" onClick={() => setPending(null)}>ยกเลิก</button>}
+            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>{e?.photoUrl || pending ? 'เปลี่ยนรูป' : 'เลือกรูป'}</Button>
+            {pending && !editing && <Button type="button" size="sm" disabled={uploading} onClick={uploadNow}>{uploading ? 'กำลังอัปโหลด…' : 'อัปโหลดรูปนี้'}</Button>}
+            {pending && <Button type="button" variant="ghost" size="sm" onClick={() => setPending(null)}>ยกเลิก</Button>}
             {!pending && e?.photoUrl && !editing && <ConfirmButton small label="ลบรูป" armedLabel="กดอีกครั้ง" onConfirm={removePhoto} />}
           </div>
           <span className="muted" style={{ fontSize: 12, textAlign: 'center' }}>{pending && editing ? 'รูปจะอัปโหลดเมื่อกดบันทึก' : 'ลากรูปมาวาง หรือกดเลือก · มือถือถ่ายรูปได้เลย'}</span>
@@ -264,57 +271,57 @@ function EmployeeDrawer({ e, admin, photosEnabled, onClose, onSaved, onDeleted }
     <Drawer
       title={e ? fullName(e) : 'เพิ่มพนักงานใหม่'}
       onClose={onClose}
-      right={admin && e && !editing ? <button className="btn sm" onClick={() => setEditing(true)}>แก้ไข</button> : undefined}
+      right={admin && e && !editing ? <Button variant="outline" size="sm" onClick={() => setEditing(true)}>แก้ไข</Button> : undefined}
     >
       {!editing && e ? (
         <>
-          <div className="card card-b emp-head">
+          <div className="panel emp-head">
             {photoBox}
             <div className="stack" style={{ gap: 6, minWidth: 0 }}>
               <h2 style={{ fontSize: '1.3rem' }}>{fullName(e)}{e.nickname && <span className="muted" style={{ fontWeight: 400 }}> ({e.nickname})</span>}</h2>
               <span>{[e.position, e.department].filter(Boolean).join(' · ') || <span className="muted">ยังไม่ระบุตำแหน่ง</span>}</span>
-              <span className="row" style={{ gap: 6 }}><span className={`chip ${STATUS_CHIP[e.status]}`}>{STATUS_LABEL[e.status]}</span>{e.code && <span className="chip plain num">{e.code}</span>}</span>
+              <span className="row" style={{ gap: 6 }}><Pill tone={STATUS_CHIP[e.status]}>{STATUS_LABEL[e.status]}</Pill>{e.code && <Badge variant="outline" className="num">{e.code}</Badge>}</span>
             </div>
           </div>
-          <div className="card card-b kv">
+          <div className="panel kv">
             <div><span>เบอร์โทร</span><b className="num">{e.phone || '–'}</b></div>
             <div><span>อีเมล</span><b style={{ overflowWrap: 'anywhere' }}>{e.email || '–'}</b></div>
             <div><span>วันที่เริ่มงาน</span><b>{e.startDate ? thDateLong(e.startDate) : '–'}</b></div>
             <div><span>อายุงาน</span><b>{tenure(e.startDate) || '–'}</b></div>
           </div>
-          {e.note && <div className="card card-b"><span className="muted" style={{ fontSize: 13 }}>หมายเหตุ</span><p style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap' }}>{e.note}</p></div>}
-          {err && <div className="note warn" role="alert">{err}</div>}
+          {e.note && <div className="panel"><span className="muted" style={{ fontSize: 13 }}>หมายเหตุ</span><p style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap' }}>{e.note}</p></div>}
+          {err && <Note tone="warn">{err}</Note>}
           {admin && <div className="row"><span className="spacer" /><ConfirmButton label="ลบพนักงานนี้" onConfirm={del} /></div>}
         </>
       ) : (
         <form className="stack" onSubmit={save}>
-          <div className="card card-b emp-head">{photoBox}<p className="muted" style={{ margin: 0 }}>รูปจะถูกย่อให้ไม่เกิน 800 พิกเซลก่อนอัปโหลด และเก็บไว้ใน Cloudflare R2</p></div>
-          <div className="card card-b stack">
+          <div className="panel emp-head">{photoBox}<p className="muted" style={{ margin: 0 }}>รูปจะถูกย่อให้ไม่เกิน 800 พิกเซลก่อนอัปโหลด และเก็บไว้ใน Cloudflare R2</p></div>
+          <div className="panel stack">
             <h3>ข้อมูลพื้นฐาน</h3>
             <div className="form-grid">
-              <div className="field"><label htmlFor="e-first">ชื่อ *</label><input id="e-first" className="input" value={f.firstName} onChange={set('firstName')} required /></div>
-              <div className="field"><label htmlFor="e-last">นามสกุล</label><input id="e-last" className="input" value={f.lastName} onChange={set('lastName')} /></div>
-              <div className="field"><label htmlFor="e-nick">ชื่อเล่น</label><input id="e-nick" className="input" value={f.nickname} onChange={set('nickname')} /></div>
-              <div className="field"><label htmlFor="e-code">รหัสพนักงาน</label><input id="e-code" className="input" value={f.code} onChange={set('code')} placeholder="เช่น EMP-001" /></div>
-              <div className="field"><label htmlFor="e-pos">ตำแหน่ง</label><input id="e-pos" className="input" value={f.position} onChange={set('position')} placeholder="เช่น พนักงานคัดแยก" /></div>
-              <div className="field"><label htmlFor="e-dept">แผนก</label><input id="e-dept" className="input" value={f.department} onChange={set('department')} placeholder="เช่น คลังสินค้า" /></div>
-              <div className="field"><label htmlFor="e-phone">เบอร์โทร</label><input id="e-phone" className="input" type="tel" value={f.phone} onChange={set('phone')} /></div>
-              <div className="field"><label htmlFor="e-email">อีเมล</label><input id="e-email" className="input" type="email" value={f.email} onChange={set('email')} /></div>
-              <div className="field"><label htmlFor="e-start">วันที่เริ่มงาน</label><input id="e-start" className="input" type="date" value={f.startDate} onChange={set('startDate')} /></div>
+              <div className="field"><Label htmlFor="e-first">ชื่อ *</Label><Input id="e-first"  value={f.firstName} onChange={set('firstName')} required /></div>
+              <div className="field"><Label htmlFor="e-last">นามสกุล</Label><Input id="e-last"  value={f.lastName} onChange={set('lastName')} /></div>
+              <div className="field"><Label htmlFor="e-nick">ชื่อเล่น</Label><Input id="e-nick"  value={f.nickname} onChange={set('nickname')} /></div>
+              <div className="field"><Label htmlFor="e-code">รหัสพนักงาน</Label><Input id="e-code"  value={f.code} onChange={set('code')} placeholder="เช่น EMP-001" /></div>
+              <div className="field"><Label htmlFor="e-pos">ตำแหน่ง</Label><Input id="e-pos"  value={f.position} onChange={set('position')} placeholder="เช่น พนักงานคัดแยก" /></div>
+              <div className="field"><Label htmlFor="e-dept">แผนก</Label><Input id="e-dept"  value={f.department} onChange={set('department')} placeholder="เช่น คลังสินค้า" /></div>
+              <div className="field"><Label htmlFor="e-phone">เบอร์โทร</Label><Input id="e-phone"  type="tel" value={f.phone} onChange={set('phone')} /></div>
+              <div className="field"><Label htmlFor="e-email">อีเมล</Label><Input id="e-email"  type="email" value={f.email} onChange={set('email')} /></div>
+              <div className="field"><Label htmlFor="e-start">วันที่เริ่มงาน</Label><Input id="e-start"  type="date" value={f.startDate} onChange={set('startDate')} /></div>
               <div className="field">
-                <label htmlFor="e-status">สถานะ</label>
-                <select id="e-status" className="input" value={f.status} onChange={set('status')}>
+                <Label htmlFor="e-status">สถานะ</Label>
+                <NativeSelect id="e-status" value={f.status} onChange={set('status')}>
                   {(Object.keys(STATUS_LABEL) as EmployeeStatus[]).map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-                </select>
+                </NativeSelect>
               </div>
             </div>
-            <div className="field"><label htmlFor="e-note">หมายเหตุ</label><textarea id="e-note" className="input" rows={3} value={f.note} onChange={set('note')} /></div>
+            <div className="field"><Label htmlFor="e-note">หมายเหตุ</Label><Textarea id="e-note"  rows={3} value={f.note} onChange={set('note')} /></div>
           </div>
-          {err && <div className="note warn" role="alert">{err}</div>}
+          {err && <Note tone="warn">{err}</Note>}
           <div className="row">
             <span className="spacer" />
-            <button type="button" className="btn" onClick={() => (e ? setEditing(false) : onClose())}>ยกเลิก</button>
-            <button className="btn pri" disabled={busy}>{busy ? (uploading ? 'กำลังอัปโหลดรูป…' : 'กำลังบันทึก…') : e ? 'บันทึก' : 'เพิ่มพนักงาน'}</button>
+            <Button type="button" variant="outline" onClick={() => (e ? setEditing(false) : onClose())}>ยกเลิก</Button>
+            <Button disabled={busy}>{busy ? (uploading ? 'กำลังอัปโหลดรูป…' : 'กำลังบันทึก…') : e ? 'บันทึก' : 'เพิ่มพนักงาน'}</Button>
           </div>
         </form>
       )}

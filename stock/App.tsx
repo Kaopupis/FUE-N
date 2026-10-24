@@ -18,6 +18,11 @@ import Stock from './pages/Stock';
 import Suppliers from './pages/Suppliers';
 import Users from './pages/Users';
 import Employees from './pages/Employees';
+import { KeyRound, LogOut } from 'lucide-react';
+import { toast as sonner } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const MENU: { sec: string; items: { page: Page; label: string }[] }[] = [
   { sec: 'ภาพรวม', items: [{ page: 'dashboard', label: 'แดชบอร์ด' }, { page: 'stock', label: 'สต๊อกคงเหลือ' }] },
@@ -26,6 +31,10 @@ const MENU: { sec: string; items: { page: Page; label: string }[] }[] = [
   { sec: 'สรุปผล', items: [{ page: 'reports', label: 'รายงาน' }, { page: 'settings', label: 'ข้อมูลและการสำรอง' }] },
   { sec: 'ระบบ', items: [{ page: 'users', label: 'ผู้ใช้งาน' }] },
 ];
+
+// ปุ่มเมนูด้านซ้าย
+const NAV_ITEM = 'flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[0.93rem] text-sidebar-foreground transition-colors focus-visible:outline-2 focus-visible:outline-white [&_svg]:size-[18px] [&_svg]:shrink-0';
+const SIDE_BTN = 'h-7 border-sidebar-border bg-transparent px-2.5 text-xs text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground';
 
 function menuFor(user: User) {
   return user.role === 'admin' ? MENU : MENU.filter((m) => m.sec !== 'ระบบ');
@@ -50,7 +59,6 @@ export default function App({ user, sheet, onLogout, onUserChange }: Props) {
   const [pwOpen, setPwOpen] = useState(false);
   const menu = menuFor(user);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [toastMsg, setToast] = useState('');
 
   const go = useCallback((t: NavTarget) => {
     setNav(t);
@@ -62,12 +70,7 @@ export default function App({ user, sheet, onLogout, onUserChange }: Props) {
     }
     if (!t.receiptId) window.scrollTo({ top: 0 });
   }, []);
-  const toast = useCallback((m: string) => setToast(m), []);
-  useEffect(() => {
-    if (!toastMsg) return;
-    const t = setTimeout(() => setToast(''), 2800);
-    return () => clearTimeout(t);
-  }, [toastMsg]);
+  const toast = useCallback((m: string) => { sonner(m); }, []);
   useEffect(() => {
     const h = () => setNav({ page: pageFromHash(user) });
     window.addEventListener('hashchange', h);
@@ -80,9 +83,9 @@ export default function App({ user, sheet, onLogout, onUserChange }: Props) {
   return (
     <Ctx.Provider value={{ model, local, update, go, toast, nav, user }}>
       <div className="mobile-bar">
-        <button className="iconbtn" onClick={() => setMenuOpen(true)} aria-label="เปิดเมนู"><Icon name="menu" /></button>
+        <Button variant="ghost" size="icon" className="hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={() => setMenuOpen(true)} aria-label="เปิดเมนู"><Icon name="menu" /></Button>
         <b>{title}</b>
-        <button className="iconbtn" onClick={() => go({ page: 'receipts', newForm: true })} aria-label="รับสินค้าเข้า"><Icon name="plus" /></button>
+        <Button variant="ghost" size="icon" className="hover:bg-sidebar-accent hover:text-sidebar-foreground" onClick={() => go({ page: 'receipts', newForm: true })} aria-label="รับสินค้าเข้า"><Icon name="plus" /></Button>
       </div>
       <div className="shell">
         {menuOpen && <div className="scrim" onClick={() => setMenuOpen(false)} />}
@@ -96,10 +99,10 @@ export default function App({ user, sheet, onLogout, onUserChange }: Props) {
               <React.Fragment key={m.sec}>
                 <div className="nav-sec">{m.sec}</div>
                 {m.items.map((i) => (
-                  <button key={i.page} className={nav.page === i.page ? 'on' : ''} onClick={() => go({ page: i.page })} aria-current={nav.page === i.page ? 'page' : undefined}>
+                  <button key={i.page} className={cn(NAV_ITEM, nav.page === i.page ? 'bg-sidebar-primary font-medium text-sidebar-primary-foreground' : 'hover:bg-sidebar-accent')} onClick={() => go({ page: i.page })} aria-current={nav.page === i.page ? 'page' : undefined}>
                     <Icon name={i.page} />
                     {i.label}
-                    {i.page === 'receipts' && model.totals.pending > 0 && <span className="badge" title="ใบรับรอกำหนดราคา">{model.totals.pending}</span>}
+                    {i.page === 'receipts' && model.totals.pending > 0 && <Badge variant="warning" className="ml-auto bg-warning/25 text-[oklch(0.92_0.1_85)]" title="ใบรับรอกำหนดราคา">{model.totals.pending}</Badge>}
                   </button>
                 ))}
               </React.Fragment>
@@ -111,8 +114,8 @@ export default function App({ user, sheet, onLogout, onUserChange }: Props) {
               <small>{user.username} · {ROLE_LABEL[user.role]}</small>
             </div>
             <div className="side-user-actions">
-              <button onClick={() => { setPwOpen(true); setMenuOpen(false); }}>เปลี่ยนรหัสผ่าน</button>
-              <button onClick={onLogout}>ออกจากระบบ</button>
+              <Button variant="outline" size="sm" className={SIDE_BTN} onClick={() => { setPwOpen(true); setMenuOpen(false); }}><KeyRound />เปลี่ยนรหัสผ่าน</Button>
+              <Button variant="outline" size="sm" className={SIDE_BTN} onClick={onLogout}><LogOut />ออกจากระบบ</Button>
             </div>
           </div>
           <div className="side-foot">ข้อมูลอ้างอิง: <a href={SHEET_URL} target="_blank" rel="noreferrer">บัญชีรับส่งสินค้า สหมิตร</a></div>
@@ -123,12 +126,11 @@ export default function App({ user, sheet, onLogout, onUserChange }: Props) {
       </div>
       {pwOpen && (
         <Drawer title="เปลี่ยนรหัสผ่าน" onClose={() => setPwOpen(false)}>
-          <div className="card card-b">
+          <div className="panel">
             <ChangePasswordForm onCancel={() => setPwOpen(false)} onDone={(u) => { setPwOpen(false); onUserChange(u); toast('เปลี่ยนรหัสผ่านแล้ว เครื่องอื่นที่เคยเข้าไว้ถูกออกจากระบบ'); }} />
           </div>
         </Drawer>
       )}
-      {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
     </Ctx.Provider>
   );
 }

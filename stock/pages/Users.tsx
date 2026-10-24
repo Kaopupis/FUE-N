@@ -1,7 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Card, Drawer, Empty, Icon, PageHead, useApp } from '../components/ui';
+import { Card, Drawer, Empty, Icon, Note, PageHead, Pill, useApp } from '../components/ui';
 import { ApiError, ROLE_LABEL, type Role, type User, api, randomPassword } from '../lib/api';
 import { copyText } from './Reports';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // วันเวลาจาก D1 (UTC "YYYY-MM-DD HH:MM:SS") แสดงเป็นเวลาไทย พ.ศ.
 function when(s: string | null) {
@@ -31,7 +38,7 @@ export default function Users() {
     return (
       <>
         <PageHead crumb="ผู้ใช้งาน" title="ผู้ใช้งาน" />
-        <div className="note warn">หน้านี้สำหรับผู้ดูแลระบบเท่านั้น</div>
+        <Note tone="warn">หน้านี้สำหรับผู้ดูแลระบบเท่านั้น</Note>
       </>
     );
   }
@@ -42,39 +49,39 @@ export default function Users() {
         crumb="ผู้ใช้งาน"
         title="ผู้ใช้งานระบบ"
         desc="เพิ่มผู้ใช้ แก้ไขสิทธิ์ ปิดการใช้งาน และรีเซ็ตรหัสผ่าน ข้อมูลเก็บในฐานข้อมูล D1 บน Cloudflare"
-        actions={<button className="btn pri" onClick={() => setEdit('new')}><Icon name="plus" size={16} />เพิ่มผู้ใช้</button>}
+        actions={<Button onClick={() => setEdit('new')}><Icon name="plus" size={16} />เพิ่มผู้ใช้</Button>}
       />
-      {err && <div className="note warn">{err}</div>}
+      {err && <Note tone="warn">{err}</Note>}
       <Card pad={false}>
-        <div className="tbl-wrap">
-          <table className="tbl">
-            <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>สิทธิ์</th><th>สถานะ</th><th>เข้าใช้ล่าสุด</th><th /></tr></thead>
-            <tbody>
+        <div>
+          <Table>
+            <TableHeader><TableRow><TableHead>ชื่อผู้ใช้</TableHead><TableHead>ชื่อที่แสดง</TableHead><TableHead>สิทธิ์</TableHead><TableHead>สถานะ</TableHead><TableHead>เข้าใช้ล่าสุด</TableHead><TableHead /></TableRow></TableHeader>
+            <TableBody>
               {(users ?? []).map((u) => (
-                <tr key={u.id}>
-                  <td className="num"><b>{u.username}</b>{u.id === me.id && <span className="chip info" style={{ marginLeft: 6 }}>คุณ</span>}</td>
-                  <td>{u.displayName || <span className="muted">–</span>}</td>
-                  <td><span className={`chip ${u.role === 'admin' ? 'ok' : 'plain'}`}>{ROLE_LABEL[u.role]}</span></td>
-                  <td>
-                    {!u.active ? <span className="chip bad">ปิดการใช้งาน</span> : u.mustChangePassword ? <span className="chip warn">รอเปลี่ยนรหัสผ่าน</span> : <span className="chip ok">ใช้งานได้</span>}
-                  </td>
-                  <td className="muted">{when(u.lastLoginAt)}</td>
-                  <td className="r">
+                <TableRow key={u.id}>
+                  <TableCell className="num"><b>{u.username}</b>{u.id === me.id && <Badge variant="info" style={{ marginLeft: 6 }}>คุณ</Badge>}</TableCell>
+                  <TableCell>{u.displayName || <span className="muted">–</span>}</TableCell>
+                  <TableCell><Pill tone={u.role === 'admin' ? 'ok' : 'plain'}>{ROLE_LABEL[u.role]}</Pill></TableCell>
+                  <TableCell>
+                    {!u.active ? <Badge variant="secondary" className="bg-destructive/12 text-destructive">ปิดการใช้งาน</Badge> : u.mustChangePassword ? <Badge variant="warning">รอเปลี่ยนรหัสผ่าน</Badge> : <Badge variant="success">ใช้งานได้</Badge>}
+                  </TableCell>
+                  <TableCell className="muted">{when(u.lastLoginAt)}</TableCell>
+                  <TableCell className="text-right">
                     <div className="row" style={{ justifyContent: 'flex-end', gap: 6, flexWrap: 'nowrap' }}>
-                      <button className="btn sm" onClick={() => setEdit(u)}>แก้ไข</button>
-                      <button className="btn sm" onClick={() => setReset(u)}>รีเซ็ตรหัสผ่าน</button>
+                      <Button variant="outline" size="sm" onClick={() => setEdit(u)}>แก้ไข</Button>
+                      <Button variant="outline" size="sm" onClick={() => setReset(u)}>รีเซ็ตรหัสผ่าน</Button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
           {users === null && !err && <Empty>กำลังโหลด…</Empty>}
         </div>
       </Card>
-      <div className="note">
+      <Note>
         ผู้ใช้ใหม่และผู้ที่ถูกรีเซ็ตรหัสผ่าน ต้องตั้งรหัสผ่านใหม่เองเมื่อเข้าระบบครั้งถัดไป · <b>ผู้ดูแลระบบ</b> จัดการผู้ใช้ได้ · <b>พนักงาน</b> ใช้งานระบบสต๊อกได้ทุกเมนู ยกเว้นหน้านี้
-      </div>
+      </Note>
       {edit && <UserForm initial={edit === 'new' ? undefined : edit} onClose={() => setEdit(null)} onSaved={(m) => { setEdit(null); toast(m); load(); }} />}
       {reset && <ResetPassword u={reset} onClose={() => { setReset(null); load(); }} />}
     </>
@@ -113,36 +120,36 @@ function UserForm({ initial, onClose, onSaved }: { initial?: User; onClose: () =
 
   return (
     <Drawer title={initial ? `แก้ไขผู้ใช้ ${initial.username}` : 'เพิ่มผู้ใช้ใหม่'} onClose={onClose}>
-      <form className="card card-b stack" onSubmit={save}>
+      <form className="panel stack" onSubmit={save}>
         <div className="form-grid">
-          <div className="field"><label htmlFor="u-name">ชื่อผู้ใช้ (ใช้ login)</label><input id="u-name" className="input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="เช่น somchai" required /></div>
-          <div className="field"><label htmlFor="u-display">ชื่อที่แสดง</label><input id="u-display" className="input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="เช่น สมชาย (คลังสินค้า)" /></div>
+          <div className="field"><Label htmlFor="u-name">ชื่อผู้ใช้ (ใช้ login)</Label><Input id="u-name"  value={username} onChange={(e) => setUsername(e.target.value)} placeholder="เช่น somchai" required /></div>
+          <div className="field"><Label htmlFor="u-display">ชื่อที่แสดง</Label><Input id="u-display"  value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="เช่น สมชาย (คลังสินค้า)" /></div>
           <div className="field">
-            <label htmlFor="u-role">สิทธิ์</label>
-            <select id="u-role" className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}>
+            <Label htmlFor="u-role">สิทธิ์</Label>
+            <NativeSelect id="u-role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
               <option value="staff">{ROLE_LABEL.staff}</option>
               <option value="admin">{ROLE_LABEL.admin}</option>
-            </select>
+            </NativeSelect>
           </div>
           {initial && (
-            <label className="row" style={{ fontSize: 14, alignSelf: 'end', paddingBottom: 8 }}>
-              <input id="u-active" type="checkbox" checked={active} disabled={self} onChange={(e) => setActive(e.target.checked)} />เปิดใช้งาน
-            </label>
+            <Label htmlFor="u-active" className="self-end pb-2.5 font-normal">
+              <Checkbox id="u-active" checked={active} disabled={self} onCheckedChange={(v) => setActive(v === true)} />เปิดใช้งาน
+            </Label>
           )}
         </div>
         {self && <p className="muted" style={{ margin: 0, fontSize: 13 }}>ปิดการใช้งานบัญชีของตัวเองไม่ได้</p>}
         {!initial && (
           <div className="field">
-            <label htmlFor="u-pass">รหัสผ่านชั่วคราว</label>
+            <Label htmlFor="u-pass">รหัสผ่านชั่วคราว</Label>
             <div className="row" style={{ flexWrap: 'nowrap', gap: 6 }}>
-              <input id="u-pass" className="input mono" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
-              <button type="button" className="btn sm" onClick={() => setPassword(randomPassword())}>สุ่มใหม่</button>
+              <Input id="u-pass" className="font-mono" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+              <Button type="button" variant="outline" size="sm" onClick={() => setPassword(randomPassword())}>สุ่มใหม่</Button>
             </div>
             <span className="muted" style={{ fontSize: 13 }}>จดหรือคัดลอกไว้แจ้งผู้ใช้ ผู้ใช้จะต้องเปลี่ยนเป็นรหัสของตัวเองเมื่อเข้าครั้งแรก</span>
           </div>
         )}
-        {err && <div className="note warn" role="alert">{err}</div>}
-        <div className="row"><span className="spacer" /><button type="button" className="btn" onClick={onClose}>ยกเลิก</button><button className="btn pri" disabled={busy}>{busy ? 'กำลังบันทึก…' : initial ? 'บันทึก' : 'เพิ่มผู้ใช้'}</button></div>
+        {err && <Note tone="warn">{err}</Note>}
+        <div className="row"><span className="spacer" /><Button type="button" variant="outline" onClick={onClose}>ยกเลิก</Button><Button disabled={busy}>{busy ? 'กำลังบันทึก…' : initial ? 'บันทึก' : 'เพิ่มผู้ใช้'}</Button></div>
       </form>
     </Drawer>
   );
@@ -170,29 +177,29 @@ function ResetPassword({ u, onClose }: { u: User; onClose: () => void }) {
   return (
     <Drawer title={`รีเซ็ตรหัสผ่าน ${u.username}`} onClose={onClose}>
       {done ? (
-        <div className="card card-b stack">
-          <div className="note">ตั้งรหัสผ่านชั่วคราวให้ <b>{u.username}</b> แล้ว ผู้ใช้ถูกออกจากระบบทุกเครื่อง และต้องตั้งรหัสใหม่เมื่อเข้าครั้งถัดไป</div>
+        <div className="panel stack">
+          <Note>ตั้งรหัสผ่านชั่วคราวให้ <b>{u.username}</b> แล้ว ผู้ใช้ถูกออกจากระบบทุกเครื่อง และต้องตั้งรหัสใหม่เมื่อเข้าครั้งถัดไป</Note>
           <div className="field">
-            <label htmlFor="rp-show">รหัสผ่านชั่วคราว</label>
+            <Label htmlFor="rp-show">รหัสผ่านชั่วคราว</Label>
             <div className="row" style={{ flexWrap: 'nowrap', gap: 6 }}>
-              <input id="rp-show" className="input mono" readOnly value={password} onFocus={(e) => e.target.select()} />
-              <button className="btn sm" onClick={() => copyText(password, (ok) => toast(ok ? 'คัดลอกรหัสผ่านแล้ว' : 'คัดลอกไม่ได้ ให้เลือกข้อความแทน'))}><Icon name="copy" size={14} />คัดลอก</button>
+              <Input id="rp-show" className="font-mono" readOnly value={password} onFocus={(e) => e.target.select()} />
+              <Button variant="outline" size="sm" onClick={() => copyText(password, (ok) => toast(ok ? 'คัดลอกรหัสผ่านแล้ว' : 'คัดลอกไม่ได้ ให้เลือกข้อความแทน'))}><Icon name="copy" size={14} />คัดลอก</Button>
             </div>
           </div>
-          <div className="row"><span className="spacer" /><button className="btn pri" onClick={onClose}>เสร็จสิ้น</button></div>
+          <div className="row"><span className="spacer" /><Button onClick={onClose}>เสร็จสิ้น</Button></div>
         </div>
       ) : (
-        <form className="card card-b stack" onSubmit={submit}>
+        <form className="panel stack" onSubmit={submit}>
           <p style={{ margin: 0 }}>ตั้งรหัสผ่านชั่วคราวใหม่ให้ <b>{u.displayName || u.username}</b></p>
           <div className="field">
-            <label htmlFor="rp-pass">รหัสผ่านชั่วคราว (อย่างน้อย 8 ตัว)</label>
+            <Label htmlFor="rp-pass">รหัสผ่านชั่วคราว (อย่างน้อย 8 ตัว)</Label>
             <div className="row" style={{ flexWrap: 'nowrap', gap: 6 }}>
-              <input id="rp-pass" className="input mono" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
-              <button type="button" className="btn sm" onClick={() => setPassword(randomPassword())}>สุ่มใหม่</button>
+              <Input id="rp-pass" className="font-mono" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+              <Button type="button" variant="outline" size="sm" onClick={() => setPassword(randomPassword())}>สุ่มใหม่</Button>
             </div>
           </div>
-          {err && <div className="note warn" role="alert">{err}</div>}
-          <div className="row"><span className="spacer" /><button type="button" className="btn" onClick={onClose}>ยกเลิก</button><button className="btn pri" disabled={busy}>{busy ? 'กำลังบันทึก…' : 'รีเซ็ตรหัสผ่าน'}</button></div>
+          {err && <Note tone="warn">{err}</Note>}
+          <div className="row"><span className="spacer" /><Button type="button" variant="outline" onClick={onClose}>ยกเลิก</Button><Button disabled={busy}>{busy ? 'กำลังบันทึก…' : 'รีเซ็ตรหัสผ่าน'}</Button></div>
         </form>
       )}
     </Drawer>

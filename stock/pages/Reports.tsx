@@ -1,7 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Card, Icon, PageHead, ReceiptLink, SupplierLink, gradeColor, useApp } from '../components/ui';
+import { Card, gradeColor, Icon, PageHead, Pill, ReceiptLink, SupplierLink, useApp } from '../components/ui';
 import { baht, kg, monthKey, monthLabel, thDate } from '../lib/format';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 export function copyText(text: string, done: (ok: boolean) => void) {
   try {
@@ -66,15 +70,15 @@ export default function Reports() {
 
   const ExportBtns = ({ name, make }: { name: string; make: () => string }) => (
     <div className="row" style={{ gap: 6 }}>
-      <button className="btn sm" onClick={() => copyText(make(), (ok) => toast(ok ? 'คัดลอก CSV แล้ว วางใน Google Sheets ได้เลย' : 'คัดลอกไม่ได้ ลองใช้ปุ่มดาวน์โหลด'))}><Icon name="copy" size={14} />คัดลอก CSV</button>
-      <button className="btn sm" onClick={() => download(name, make())}>ดาวน์โหลด</button>
+      <Button variant="outline" size="sm" onClick={() => copyText(make(), (ok) => toast(ok ? 'คัดลอก CSV แล้ว วางใน Google Sheets ได้เลย' : 'คัดลอกไม่ได้ ลองใช้ปุ่มดาวน์โหลด'))}><Icon name="copy" size={14} />คัดลอก CSV</Button>
+      <Button variant="outline" size="sm" onClick={() => download(name, make())}>ดาวน์โหลด</Button>
     </div>
   );
 
   return (
     <>
       <PageHead crumb="รายงาน" title="รายงาน" desc="สรุปรายเดือน แนวโน้มราคา และผลต่างตาชั่ง" />
-      <div className="grid g-2e">
+      <div className="grid-2e">
         <Card title="ส่งออกข้อมูลใบรับ" sub="ทุกบรรทัดราคา แยกเกรด" right={<ExportBtns name="ใบรับสินค้า.csv" make={exportReceipts} />}><span className="muted">{model.receipts.length} ใบรับ</span></Card>
         <Card title="ส่งออกสต๊อกคงเหลือ" sub="ยอดคงเหลือและมูลค่าแยกเกรด" right={<ExportBtns name="สต๊อกคงเหลือ.csv" make={exportStock} />}><span className="muted">{model.grades.filter((g) => g.received || g.balance).length} เกรด</span></Card>
       </div>
@@ -94,45 +98,45 @@ export default function Reports() {
         </div>
       </Card>
 
-      <div className="seg" style={{ alignSelf: 'flex-start' }}>
-        <button className={view === 'month' ? 'on' : ''} onClick={() => setView('month')}>สรุปรายเดือน</button>
-        <button className={view === 'scale' ? 'on' : ''} onClick={() => setView('scale')}>ผลต่างตาชั่งรถกับกระสอบ</button>
-      </div>
+      <ToggleGroup className="self-start" type="single" variant="outline" value={view} onValueChange={(v) => v && setView(v as 'month' | 'scale')}>
+        <ToggleGroupItem value="month" className="px-4">สรุปรายเดือน</ToggleGroupItem>
+        <ToggleGroupItem value="scale" className="px-4">ผลต่างตาชั่งรถกับกระสอบ</ToggleGroupItem>
+      </ToggleGroup>
 
       {view === 'month' ? (
         <Card pad={false}>
-          <div className="tbl-wrap">
-            <table className="tbl">
-              <thead><tr><th>เดือน</th><th className="r">ใบรับ</th><th className="r">น้ำหนักสุทธิ (กก.)</th><th className="r">ยอดซื้อก่อน VAT</th><th className="r">VAT</th><th className="r">ราคาเฉลี่ย/กก.</th><th className="r">รอราคา</th></tr></thead>
-              <tbody>
+          <div>
+            <Table>
+              <TableHeader><TableRow><TableHead>เดือน</TableHead><TableHead className="text-right">ใบรับ</TableHead><TableHead className="text-right">น้ำหนักสุทธิ (กก.)</TableHead><TableHead className="text-right">ยอดซื้อก่อน VAT</TableHead><TableHead className="text-right">VAT</TableHead><TableHead className="text-right">ราคาเฉลี่ย/กก.</TableHead><TableHead className="text-right">รอราคา</TableHead></TableRow></TableHeader>
+              <TableBody>
                 {monthly.map((m) => (
-                  <tr key={m.month}>
-                    <td>{monthLabel(m.month, true)}</td><td className="r num">{m.receipts}</td><td className="r num">{kg(m.kg)}</td><td className="r num">{baht(m.value)}</td><td className="r num">{baht(m.vat)}</td><td className="r num">{m.avg ? baht(m.avg) : '–'}</td>
-                    <td className="r">{m.pending ? <span className="chip warn">{m.pending}</span> : <span className="chip ok">ครบ</span>}</td>
-                  </tr>
+                  <TableRow key={m.month}>
+                    <TableCell>{monthLabel(m.month, true)}</TableCell><TableCell className="text-right num">{m.receipts}</TableCell><TableCell className="text-right num">{kg(m.kg)}</TableCell><TableCell className="text-right num">{baht(m.value)}</TableCell><TableCell className="text-right num">{baht(m.vat)}</TableCell><TableCell className="text-right num">{m.avg ? baht(m.avg) : '–'}</TableCell>
+                    <TableCell className="text-right">{m.pending ? <Badge variant="warning">{m.pending}</Badge> : <Badge variant="success">ครบ</Badge>}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-              <tfoot>
-                <tr><td>รวม</td><td className="r num">{model.receipts.length}</td><td className="r num">{kg(model.totals.kg)}</td><td className="r num">{baht(model.totals.value)}</td><td className="r num">{baht(monthly.reduce((s, m) => s + m.vat, 0))}</td><td /><td className="r num">{model.totals.pending}</td></tr>
-              </tfoot>
-            </table>
+              </TableBody>
+              <TableFooter>
+                <TableRow><TableCell>รวม</TableCell><TableCell className="text-right num">{model.receipts.length}</TableCell><TableCell className="text-right num">{kg(model.totals.kg)}</TableCell><TableCell className="text-right num">{baht(model.totals.value)}</TableCell><TableCell className="text-right num">{baht(monthly.reduce((s, m) => s + m.vat, 0))}</TableCell><TableCell /><TableCell className="text-right num">{model.totals.pending}</TableCell></TableRow>
+              </TableFooter>
+            </Table>
           </div>
         </Card>
       ) : (
         <Card title="ผลต่างตาชั่งรถกับน้ำหนักกระสอบ" sub={`เฉลี่ย ${avgPct.toFixed(2)}% · ผลต่างบวกคือรถหนักกว่ากระสอบรวม (เต๋า พาเลท เศษ) · เรียงจากต่างมากสุด`} pad={false}>
-          <div className="tbl-wrap scroll-y" style={{ marginTop: 10 }}>
-            <table className="tbl">
-              <thead><tr><th>เลขที่รับ</th><th>วันที่</th><th>ผู้ขาย</th><th className="r">ตาชั่งรถ</th><th className="r">กระสอบสุทธิ</th><th className="r">ผลต่าง (กก.)</th><th className="r">%</th></tr></thead>
-              <tbody>
+          <div className="scroll-y" style={{ marginTop: 10 }}>
+            <Table>
+              <TableHeader><TableRow><TableHead>เลขที่รับ</TableHead><TableHead>วันที่</TableHead><TableHead>ผู้ขาย</TableHead><TableHead className="text-right">ตาชั่งรถ</TableHead><TableHead className="text-right">กระสอบสุทธิ</TableHead><TableHead className="text-right">ผลต่าง (กก.)</TableHead><TableHead className="text-right">%</TableHead></TableRow></TableHeader>
+              <TableBody>
                 {scale.map(({ r, diff, pct }) => (
-                  <tr key={r.id}>
-                    <td><ReceiptLink id={r.id} /></td><td className="num">{thDate(r.date)}</td><td><SupplierLink name={r.supplier} /></td>
-                    <td className="r num">{kg(r.truckKg)}</td><td className="r num">{kg(r.netKg)}</td><td className="r num">{kg(diff)}</td>
-                    <td className="r"><span className={`chip ${Math.abs(pct) > 2 ? 'bad' : Math.abs(pct) > 0.5 ? 'warn' : 'ok'}`}>{pct.toFixed(2)}%</span></td>
-                  </tr>
+                  <TableRow key={r.id}>
+                    <TableCell><ReceiptLink id={r.id} /></TableCell><TableCell className="num">{thDate(r.date)}</TableCell><TableCell><SupplierLink name={r.supplier} /></TableCell>
+                    <TableCell className="text-right num">{kg(r.truckKg)}</TableCell><TableCell className="text-right num">{kg(r.netKg)}</TableCell><TableCell className="text-right num">{kg(diff)}</TableCell>
+                    <TableCell className="text-right"><Pill tone={Math.abs(pct) > 2 ? 'bad' : Math.abs(pct) > 0.5 ? 'warn' : 'ok'}>{pct.toFixed(2)}%</Pill></TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </Card>
       )}

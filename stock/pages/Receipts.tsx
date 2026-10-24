@@ -1,9 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Card, ConfirmButton, Drawer, Empty, GradeChip, Icon, PageHead, ReceiptLink, StatusChip, SupplierLink, useApp } from '../components/ui';
+import { Card, ConfirmButton, Drawer, Empty, GradeChip, Icon, Note, PageHead, ReceiptLink, StatusChip, SupplierLink, useApp } from '../components/ui';
 import { DEFAULT_TARE, SHEET_URL, VAT_RATE } from '../lib/data';
 import { ReceiptView, linesFromBags, nextReceiptId } from '../lib/calc';
 import { baht, kg, monthKey, monthLabel, round2, thDate, thDateLong, todayISO } from '../lib/format';
 import type { Bag, PriceLine, Receipt } from '../lib/types';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function Receipts() {
   const { model, nav, go } = useApp();
@@ -42,52 +50,52 @@ export default function Receipts() {
         crumb="รับสินค้า"
         title="ใบรับสินค้า (เข้า)"
         desc="ทุกใบรับมาจากชีตบัญชีรับส่งสินค้า และใบที่บันทึกเพิ่มในระบบนี้"
-        actions={<button className="btn pri" onClick={() => setForm('new')}><Icon name="plus" size={16} />สร้างใบรับใหม่</button>}
+        actions={<Button onClick={() => setForm('new')}><Icon name="plus" size={16} />สร้างใบรับใหม่</Button>}
       />
       <Card pad={false}>
-        <div className="card-b filters">
-          <input id="rc-search" className="input search" placeholder="ค้นหาเลขที่รับ ผู้ขาย หรือทะเบียนรถ" value={q} onChange={(e) => setQ(e.target.value)} />
-          <select id="rc-month" className="input" value={month} onChange={(e) => setMonth(e.target.value)}>
+        <div className="filters px-4">
+          <Input id="rc-search" className="search" placeholder="ค้นหาเลขที่รับ ผู้ขาย หรือทะเบียนรถ" value={q} onChange={(e) => setQ(e.target.value)} />
+          <NativeSelect id="rc-month" value={month} onChange={(e) => setMonth(e.target.value)}>
             <option value="">ทุกเดือน</option>
             <option value="pending">เฉพาะใบที่รอราคา</option>
             {months.map((m) => <option key={m} value={m}>{monthLabel(m, true)}</option>)}
-          </select>
-          <select id="rc-sup" className="input" value={sup} onChange={(e) => setSup(e.target.value)}>
+          </NativeSelect>
+          <NativeSelect id="rc-sup" value={sup} onChange={(e) => setSup(e.target.value)}>
             <option value="">ผู้ขายทั้งหมด</option>
             {model.suppliers.map((s) => <option key={s.name}>{s.name}</option>)}
-          </select>
-          <select id="rc-grade" className="input" value={grade} onChange={(e) => setGrade(e.target.value)}>
+          </NativeSelect>
+          <NativeSelect id="rc-grade" value={grade} onChange={(e) => setGrade(e.target.value)}>
             <option value="">ทุกเกรด</option>
             {model.grades.filter((g) => g.receiptCount).map((g) => <option key={g.grade}>{g.grade}</option>)}
-          </select>
-          {(q || month || sup || grade) && <button className="btn ghost sm" onClick={() => { setQ(''); setMonth(''); setSup(''); setGrade(''); }}>ล้างตัวกรอง</button>}
+          </NativeSelect>
+          {(q || month || sup || grade) && <Button variant="ghost" size="sm" onClick={() => { setQ(''); setMonth(''); setSup(''); setGrade(''); }}>ล้างตัวกรอง</Button>}
         </div>
-        <div className="card-b" style={{ paddingTop: 0 }}>
-          <div className="row" style={{ fontSize: 13, color: 'var(--ink-2)' }}>
+        <div className="px-4" style={{ paddingTop: 0 }}>
+          <div className="row" style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>
             พบ <b>{rows.length}</b> ใบ · น้ำหนัก{grade ? ` ${grade}` : 'สุทธิ'} <b className="num">{kg(totKg)}</b> กก. · ยอดรวม VAT <b className="num">{baht(totVal)}</b> บาท
           </div>
         </div>
-        <div className="tbl-wrap scroll-y">
-          <table className="tbl">
-            <thead>
-              <tr><th>เลขที่รับ</th><th>วันที่</th><th>ผู้ขาย</th><th>ทะเบียนรถ</th><th>เกรด</th><th className="r">กระสอบ</th><th className="r">นน.สุทธิ (กก.)</th><th className="r">รวม VAT (บาท)</th><th>สถานะราคา</th></tr>
-            </thead>
-            <tbody>
+        <div className="scroll-y">
+          <Table>
+            <TableHeader>
+              <TableRow><TableHead>เลขที่รับ</TableHead><TableHead>วันที่</TableHead><TableHead>ผู้ขาย</TableHead><TableHead>ทะเบียนรถ</TableHead><TableHead>เกรด</TableHead><TableHead className="text-right">กระสอบ</TableHead><TableHead className="text-right">นน.สุทธิ (กก.)</TableHead><TableHead className="text-right">รวม VAT (บาท)</TableHead><TableHead>สถานะราคา</TableHead></TableRow>
+            </TableHeader>
+            <TableBody>
               {rows.map((r) => (
-                <tr key={r.id} className={`click${open?.id === r.id ? ' sel' : ''}`} onClick={() => go({ page: 'receipts', receiptId: r.id, month: month || undefined, supplier: sup || undefined, grade: grade || undefined })}>
-                  <td><ReceiptLink id={r.id} />{r.source === 'local' && <span className="chip info" style={{ marginLeft: 6 }}>บันทึกใหม่</span>}</td>
-                  <td className="num">{thDate(r.date)}</td>
-                  <td><SupplierLink name={r.supplier} /></td>
-                  <td className="num muted">{r.plates.join(', ') || '–'}</td>
-                  <td><div className="chips">{Object.keys(r.qty).slice(0, 4).map((g) => <GradeChip key={g} g={g} />)}{Object.keys(r.qty).length > 4 && <span className="chip plain">+{Object.keys(r.qty).length - 4}</span>}</div></td>
-                  <td className="r num">{r.bags.length || '–'}</td>
-                  <td className="r num">{kg(r.netKg)}</td>
-                  <td className="r num">{r.total ? baht(r.total) : '–'}</td>
-                  <td><StatusChip s={r.status} /></td>
-                </tr>
+                <TableRow key={r.id} className={`click${open?.id === r.id ? ' sel' : ''}`} onClick={() => go({ page: 'receipts', receiptId: r.id, month: month || undefined, supplier: sup || undefined, grade: grade || undefined })}>
+                  <TableCell><ReceiptLink id={r.id} />{r.source === 'local' && <Badge variant="info" style={{ marginLeft: 6 }}>บันทึกใหม่</Badge>}</TableCell>
+                  <TableCell className="num">{thDate(r.date)}</TableCell>
+                  <TableCell><SupplierLink name={r.supplier} /></TableCell>
+                  <TableCell className="num muted">{r.plates.join(', ') || '–'}</TableCell>
+                  <TableCell><div className="chips">{Object.keys(r.qty).slice(0, 4).map((g) => <GradeChip key={g} g={g} />)}{Object.keys(r.qty).length > 4 && <Badge variant="outline">+{Object.keys(r.qty).length - 4}</Badge>}</div></TableCell>
+                  <TableCell className="text-right num">{r.bags.length || '–'}</TableCell>
+                  <TableCell className="text-right num">{kg(r.netKg)}</TableCell>
+                  <TableCell className="text-right num">{r.total ? baht(r.total) : '–'}</TableCell>
+                  <TableCell><StatusChip s={r.status} /></TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
           {!rows.length && <Empty>ไม่พบใบรับที่ตรงกับตัวกรอง</Empty>}
         </div>
       </Card>
@@ -112,65 +120,65 @@ function ReceiptDetail({ r, onClose, onEdit }: { r: ReceiptView; onClose: () => 
     <Drawer
       title={<>ใบรับ <span className="num">{r.id}</span></>}
       onClose={onClose}
-      right={r.source === 'local' ? <button className="btn sm" onClick={onEdit}>แก้ไข</button> : undefined}
+      right={r.source === 'local' ? <Button variant="outline" size="sm" onClick={onEdit}>แก้ไข</Button> : undefined}
     >
-      <div className="card card-b stack">
-        <div className="row"><StatusChip s={r.status} />{r.noVat && <span className="chip info">ไม่มี VAT</span>}{r.source === 'sheet' ? <span className="chip plain">จากชีต</span> : <span className="chip info">บันทึกในระบบ</span>}{r.overridden && <span className="chip info">ราคาใส่ในระบบ</span>}</div>
+      <div className="panel stack">
+        <div className="row"><StatusChip s={r.status} />{r.noVat && <Badge variant="info">ไม่มี VAT</Badge>}{r.source === 'sheet' ? <Badge variant="outline">จากชีต</Badge> : <Badge variant="info">บันทึกในระบบ</Badge>}{r.overridden && <Badge variant="info">ราคาใส่ในระบบ</Badge>}</div>
         <div className="kv">
           <div><span>วันที่รับ</span><b>{thDateLong(r.date)}</b></div>
           <div><span>ประเภท</span><b>รับซื้อ</b></div>
           <div><span>ผู้ขาย</span><b><SupplierLink name={r.supplier} /></b></div>
           <div><span>ทะเบียนรถ / คันที่</span><b className="num">{r.plates.join(', ') || '–'} {r.trip ? `(คันที่ ${r.trip})` : ''}</b></div>
         </div>
-        {r.note && <div className="note">{r.note}</div>}
+        {r.note && <Note>{r.note}</Note>}
       </div>
 
       {r.truckNet.length > 0 && (
-        <div className="card card-b stack">
+        <div className="panel stack">
           <h3>ตาชั่งรถ</h3>
-          <div className="tbl-wrap">
-            <table className="tbl">
-              <thead><tr><th>คัน</th><th className="r">ชั่งเข้า</th><th className="r">ชั่งออก</th><th className="r">สุทธิ (กก.)</th></tr></thead>
-              <tbody>{r.truckNet.map((n, i) => <tr key={i}><td>{i + 1}</td><td className="r num">{kg(r.truckIn[i] ?? 0)}</td><td className="r num">{kg(r.truckOut[i] ?? 0)}</td><td className="r num">{kg(n)}</td></tr>)}</tbody>
-            </table>
+          <div>
+            <Table>
+              <TableHeader><TableRow><TableHead>คัน</TableHead><TableHead className="text-right">ชั่งเข้า</TableHead><TableHead className="text-right">ชั่งออก</TableHead><TableHead className="text-right">สุทธิ (กก.)</TableHead></TableRow></TableHeader>
+              <TableBody>{r.truckNet.map((n, i) => <TableRow key={i}><TableCell>{i + 1}</TableCell><TableCell className="text-right num">{kg(r.truckIn[i] ?? 0)}</TableCell><TableCell className="text-right num">{kg(r.truckOut[i] ?? 0)}</TableCell><TableCell className="text-right num">{kg(n)}</TableCell></TableRow>)}</TableBody>
+            </Table>
           </div>
-          {r.netKg > 0 && <div className={`note${Math.abs(diff) > r.truckKg * 0.01 ? ' warn' : ''}`}>ตาชั่งรถ {kg(r.truckKg)} กก. เทียบกับน้ำหนักกระสอบสุทธิ {kg(r.netKg)} กก. ต่างกัน <b className="num">{kg(diff)}</b> กก. ({r.truckKg ? ((diff / r.truckKg) * 100).toFixed(2) : 0}%)</div>}
+          {r.netKg > 0 && <Note tone={Math.abs(diff) > r.truckKg * 0.01 ? 'warn' : 'info'}>ตาชั่งรถ {kg(r.truckKg)} กก. เทียบกับน้ำหนักกระสอบสุทธิ {kg(r.netKg)} กก. ต่างกัน <b className="num">{kg(diff)}</b> กก. ({r.truckKg ? ((diff / r.truckKg) * 100).toFixed(2) : 0}%)</Note>}
         </div>
       )}
 
-      <div className="card card-b stack">
-        <div className="row"><h3>ราคารับซื้อ</h3><span className="spacer" /><button className="btn sm" onClick={() => setPricing(true)}>{r.status === 'priced' ? 'แก้ไขราคา' : 'ใส่ราคา'}</button></div>
+      <div className="panel stack">
+        <div className="row"><h3>ราคารับซื้อ</h3><span className="spacer" /><Button variant="outline" size="sm" onClick={() => setPricing(true)}>{r.status === 'priced' ? 'แก้ไขราคา' : 'ใส่ราคา'}</Button></div>
         {r.lines.length ? (
-          <div className="tbl-wrap">
-            <table className="tbl">
-              <thead><tr><th>เกรด</th><th className="r">นน.สุทธิ (หักเต๋าแล้ว)</th><th className="r">ราคา/กก.</th><th className="r">ราคารวม</th></tr></thead>
-              <tbody>{r.lines.map((l, i) => <tr key={i}><td><GradeChip g={l.grade} /></td><td className="r num">{kg(l.net)}</td><td className="r num">{l.price ? baht(l.price) : <span className="chip warn">รอราคา</span>}</td><td className="r num">{baht(l.total)}</td></tr>)}</tbody>
-              <tfoot>
-                <tr><td colSpan={3}>รวม</td><td className="r num">{baht(r.subtotal)}</td></tr>
-                <tr><td colSpan={3}>VAT {r.noVat ? '(ไม่มี)' : `${VAT_RATE * 100}%`}</td><td className="r num">{baht(r.vat)}</td></tr>
-                <tr><td colSpan={3}>รวม VAT</td><td className="r num" style={{ color: 'var(--leaf)' }}>{baht(r.total)}</td></tr>
-              </tfoot>
-            </table>
+          <div>
+            <Table>
+              <TableHeader><TableRow><TableHead>เกรด</TableHead><TableHead className="text-right">นน.สุทธิ (หักเต๋าแล้ว)</TableHead><TableHead className="text-right">ราคา/กก.</TableHead><TableHead className="text-right">ราคารวม</TableHead></TableRow></TableHeader>
+              <TableBody>{r.lines.map((l, i) => <TableRow key={i}><TableCell><GradeChip g={l.grade} /></TableCell><TableCell className="text-right num">{kg(l.net)}</TableCell><TableCell className="text-right num">{l.price ? baht(l.price) : <Badge variant="warning">รอราคา</Badge>}</TableCell><TableCell className="text-right num">{baht(l.total)}</TableCell></TableRow>)}</TableBody>
+              <TableFooter>
+                <TableRow><TableCell colSpan={3}>รวม</TableCell><TableCell className="text-right num">{baht(r.subtotal)}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3}>VAT {r.noVat ? '(ไม่มี)' : `${VAT_RATE * 100}%`}</TableCell><TableCell className="text-right num">{baht(r.vat)}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3}>รวม VAT</TableCell><TableCell className="text-right num" style={{ color: 'var(--primary)' }}>{baht(r.total)}</TableCell></TableRow>
+              </TableFooter>
+            </Table>
           </div>
         ) : <Empty>ยังไม่มีรายการราคา</Empty>}
       </div>
 
       {r.bags.length > 0 && (
-        <div className="card card-b stack">
+        <div className="panel stack">
           <h3>รายการกระสอบ ({r.bags.length})</h3>
-          <div className="tbl-wrap">
-            <table className="tbl">
-              <thead><tr><th>ลำดับ</th><th>เกรด</th><th className="r">นน.ก่อน (ชั่งเข้า)</th><th className="r">นน. เต๋า/กระสอบ</th><th className="r">นน.สุทธิ</th></tr></thead>
-              <tbody>{r.bags.map((b) => <tr key={b.no}><td>{b.no}</td><td><GradeChip g={b.grade} /></td><td className="r num">{kg(b.gross)}</td><td className="r num">{kg(b.tare)}</td><td className="r num">{kg(b.net)}</td></tr>)}</tbody>
-              <tfoot><tr><td colSpan={2}>รวม</td><td className="r num">{kg(gross)}</td><td className="r num">{kg(tare)}</td><td className="r num">{kg(r.netKg)}</td></tr></tfoot>
-            </table>
+          <div>
+            <Table>
+              <TableHeader><TableRow><TableHead>ลำดับ</TableHead><TableHead>เกรด</TableHead><TableHead className="text-right">นน.ก่อน (ชั่งเข้า)</TableHead><TableHead className="text-right">นน. เต๋า/กระสอบ</TableHead><TableHead className="text-right">นน.สุทธิ</TableHead></TableRow></TableHeader>
+              <TableBody>{r.bags.map((b) => <TableRow key={b.no}><TableCell>{b.no}</TableCell><TableCell><GradeChip g={b.grade} /></TableCell><TableCell className="text-right num">{kg(b.gross)}</TableCell><TableCell className="text-right num">{kg(b.tare)}</TableCell><TableCell className="text-right num">{kg(b.net)}</TableCell></TableRow>)}</TableBody>
+              <TableFooter><TableRow><TableCell colSpan={2}>รวม</TableCell><TableCell className="text-right num">{kg(gross)}</TableCell><TableCell className="text-right num">{kg(tare)}</TableCell><TableCell className="text-right num">{kg(r.netKg)}</TableCell></TableRow></TableFooter>
+            </Table>
           </div>
         </div>
       )}
 
       <div className="row">
-        <button className="btn" onClick={() => go({ page: 'relations', supplier: r.supplier })}><Icon name="relations" size={16} />ดูความสัมพันธ์ผู้ขายนี้</button>
-        {r.source === 'sheet' && <a className="btn" href={SHEET_URL} target="_blank" rel="noreferrer"><Icon name="ext" size={16} />เปิดชีตต้นฉบับ</a>}
+        <Button variant="outline" onClick={() => go({ page: 'relations', supplier: r.supplier })}><Icon name="relations" size={16} />ดูความสัมพันธ์ผู้ขายนี้</Button>
+        {r.source === 'sheet' && <Button variant="outline" asChild><a href={SHEET_URL} target="_blank" rel="noreferrer"><Icon name="ext" size={16} />เปิดชีตต้นฉบับ</a></Button>}
         <span className="spacer" />
         {r.source === 'local' && <ConfirmButton onConfirm={del} label="ลบใบรับนี้" />}
       </div>
@@ -205,30 +213,30 @@ function PriceEditor({ r, onClose }: { r: ReceiptView; onClose: () => void }) {
     onClose();
   };
   return (
-    <div className="card card-b stack" style={{ borderColor: 'var(--leaf)' }}>
+    <div className="panel stack" style={{ borderColor: 'var(--primary)' }}>
       <h3>กำหนดราคา {r.id}</h3>
       <p className="mt0 muted" style={{ fontSize: 13, margin: 0 }}>ช่องที่ว่างเติมราคาล่าสุดของเกรดนั้นให้ก่อน แก้ไขได้</p>
-      <div className="tbl-wrap">
-        <table className="tbl">
-          <thead><tr><th>เกรด</th><th className="r">นน.สุทธิ</th><th className="r">ราคา/กก.</th><th className="r">ราคารวม</th></tr></thead>
-          <tbody>
+      <div>
+        <Table>
+          <TableHeader><TableRow><TableHead>เกรด</TableHead><TableHead className="text-right">นน.สุทธิ</TableHead><TableHead className="text-right">ราคา/กก.</TableHead><TableHead className="text-right">ราคารวม</TableHead></TableRow></TableHeader>
+          <TableBody>
             {lines.map((l, i) => (
-              <tr key={i}>
-                <td><GradeChip g={l.grade} /></td>
-                <td className="r num">{kg(l.net)}</td>
-                <td className="r"><input id={`price-${i}`} className="input num" style={{ width: 110 }} inputMode="decimal" value={l.price || ''} onChange={(e) => set(i, Number(e.target.value) || 0)} /></td>
-                <td className="r num">{baht(l.total)}</td>
-              </tr>
+              <TableRow key={i}>
+                <TableCell><GradeChip g={l.grade} /></TableCell>
+                <TableCell className="text-right num">{kg(l.net)}</TableCell>
+                <TableCell className="text-right"><Input id={`price-${i}`} className="num text-right" style={{ width: 110 }} inputMode="decimal" value={l.price || ''} onChange={(e) => set(i, Number(e.target.value) || 0)} /></TableCell>
+                <TableCell className="text-right num">{baht(l.total)}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-          <tfoot><tr><td colSpan={3}>รวมก่อน VAT</td><td className="r num">{baht(sub)}</td></tr></tfoot>
-        </table>
+          </TableBody>
+          <TableFooter><TableRow><TableCell colSpan={3}>รวมก่อน VAT</TableCell><TableCell className="text-right num">{baht(sub)}</TableCell></TableRow></TableFooter>
+        </Table>
       </div>
       <div className="row">
-        {r.overridden && <button className="btn ghost sm" onClick={reset}>ใช้ราคาตามชีต</button>}
+        {r.overridden && <Button variant="ghost" size="sm" onClick={reset}>ใช้ราคาตามชีต</Button>}
         <span className="spacer" />
-        <button className="btn" onClick={onClose}>ยกเลิก</button>
-        <button className="btn pri" onClick={save}>บันทึกราคา</button>
+        <Button variant="outline" onClick={onClose}>ยกเลิก</Button>
+        <Button onClick={save}>บันทึกราคา</Button>
       </div>
     </div>
   );
@@ -291,86 +299,86 @@ function ReceiptForm({ initial, onClose }: { initial?: Receipt; onClose: () => v
 
   return (
     <Drawer title={initial ? `แก้ไขใบรับ ${initial.id}` : 'สร้างใบรับสินค้าใหม่'} onClose={onClose}>
-      <div className="card card-b stack">
+      <div className="panel stack">
         <h3>ข้อมูลใบรับ</h3>
         <div className="form-grid">
-          <div className="field"><label htmlFor="f-id">เลขที่รับ</label><input id="f-id" className="input num" value={id} onChange={(e) => setId(e.target.value)} disabled={!!initial} /></div>
-          <div className="field"><label htmlFor="f-date">วันที่</label><input id="f-date" className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+          <div className="field"><Label htmlFor="f-id">เลขที่รับ</Label><Input id="f-id" className="num text-right" value={id} onChange={(e) => setId(e.target.value)} disabled={!!initial} /></div>
+          <div className="field"><Label htmlFor="f-date">วันที่</Label><Input id="f-date"  type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
           <div className="field">
-            <label htmlFor="f-sup">ผู้ขาย</label>
-            <input id="f-sup" className="input" list="sup-list" value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="เลือกหรือพิมพ์ชื่อใหม่" />
+            <Label htmlFor="f-sup">ผู้ขาย</Label>
+            <Input id="f-sup"  list="sup-list" value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="เลือกหรือพิมพ์ชื่อใหม่" />
             <datalist id="sup-list">{model.suppliers.map((s) => <option key={s.name} value={s.name} />)}</datalist>
           </div>
-          <label className="row" style={{ fontSize: 14, alignSelf: 'end', paddingBottom: 8 }}><input id="f-novat" type="checkbox" checked={noVat} onChange={(e) => setNoVat(e.target.checked)} />ไม่มี VAT</label>
+          <Label htmlFor="f-novat" className="self-end pb-2.5 font-normal"><Checkbox id="f-novat" checked={noVat} onCheckedChange={(v) => setNoVat(v === true)} />ไม่มี VAT</Label>
         </div>
       </div>
 
-      <div className="card card-b stack">
-        <div className="row"><h3>ตาชั่งรถ</h3><span className="spacer" /><button className="btn sm" onClick={() => setTrucks((t) => [...t, { plate: '', tin: '', tout: '' }])}><Icon name="plus" size={14} />เพิ่มคัน</button></div>
+      <div className="panel stack">
+        <div className="row"><h3>ตาชั่งรถ</h3><span className="spacer" /><Button variant="outline" size="sm" onClick={() => setTrucks((t) => [...t, { plate: '', tin: '', tout: '' }])}><Icon name="plus" size={14} />เพิ่มคัน</Button></div>
         {trucks.map((t, i) => (
           <div key={i} className="form-grid">
-            <div className="field"><label htmlFor={`t-plate-${i}`}>ทะเบียนรถ คันที่ {i + 1}</label><input id={`t-plate-${i}`} className="input" value={t.plate} onChange={(e) => setTrucks((ts) => ts.map((x, j) => (j === i ? { ...x, plate: e.target.value } : x)))} /></div>
-            <div className="field"><label htmlFor={`t-in-${i}`}>นน. ชั่งเข้า</label><input id={`t-in-${i}`} className="input num" inputMode="decimal" value={t.tin} onChange={(e) => setTrucks((ts) => ts.map((x, j) => (j === i ? { ...x, tin: e.target.value } : x)))} /></div>
-            <div className="field"><label htmlFor={`t-out-${i}`}>นน. ชั่งออก</label><input id={`t-out-${i}`} className="input num" inputMode="decimal" value={t.tout} onChange={(e) => setTrucks((ts) => ts.map((x, j) => (j === i ? { ...x, tout: e.target.value } : x)))} /></div>
-            <div className="field"><label>นน.สุทธิ</label><div className="input num" style={{ background: 'var(--mint)' }}>{kg((Number(t.tin) || 0) - (Number(t.tout) || 0))}</div></div>
+            <div className="field"><Label htmlFor={`t-plate-${i}`}>ทะเบียนรถ คันที่ {i + 1}</Label><Input id={`t-plate-${i}`}  value={t.plate} onChange={(e) => setTrucks((ts) => ts.map((x, j) => (j === i ? { ...x, plate: e.target.value } : x)))} /></div>
+            <div className="field"><Label htmlFor={`t-in-${i}`}>นน. ชั่งเข้า</Label><Input id={`t-in-${i}`} className="num text-right" inputMode="decimal" value={t.tin} onChange={(e) => setTrucks((ts) => ts.map((x, j) => (j === i ? { ...x, tin: e.target.value } : x)))} /></div>
+            <div className="field"><Label htmlFor={`t-out-${i}`}>นน. ชั่งออก</Label><Input id={`t-out-${i}`} className="num text-right" inputMode="decimal" value={t.tout} onChange={(e) => setTrucks((ts) => ts.map((x, j) => (j === i ? { ...x, tout: e.target.value } : x)))} /></div>
+            <div className="field"><Label>นน.สุทธิ</Label><Input readOnly tabIndex={-1} className="num bg-muted text-right" value={kg((Number(t.tin) || 0) - (Number(t.tout) || 0))} /></div>
           </div>
         ))}
       </div>
 
-      <div className="card card-b stack">
+      <div className="panel stack">
         <div className="row"><h3>รายการกระสอบ</h3><span className="spacer" /><span className="muted" style={{ fontSize: 13 }}>นน.สุทธิ = นน.ก่อน − เต๋า/กระสอบ</span></div>
         <datalist id="grade-list">{gradeOptions.map((g) => <option key={g} value={g} />)}</datalist>
-        <div className="tbl-wrap">
-          <table className="tbl">
-            <thead><tr><th>ลำดับ</th><th>เกรด</th><th className="r">นน.ก่อน (ชั่งเข้า)</th><th className="r">เต๋า/กระสอบ</th><th className="r">นน.สุทธิ</th><th /></tr></thead>
-            <tbody>
+        <div>
+          <Table>
+            <TableHeader><TableRow><TableHead>ลำดับ</TableHead><TableHead>เกรด</TableHead><TableHead className="text-right">นน.ก่อน (ชั่งเข้า)</TableHead><TableHead className="text-right">เต๋า/กระสอบ</TableHead><TableHead className="text-right">นน.สุทธิ</TableHead><TableHead /></TableRow></TableHeader>
+            <TableBody>
               {bags.map((b, i) => (
-                <tr key={i}>
-                  <td>{i + 1}</td>
-                  <td><input id={`b-grade-${i}`} className="input" list="grade-list" style={{ minWidth: 110 }} value={b.grade} onChange={(e) => setBags((bs) => bs.map((x, j) => (j === i ? { ...x, grade: e.target.value } : x)))} /></td>
-                  <td className="r"><input id={`b-gross-${i}`} className="input num" style={{ width: 110 }} inputMode="decimal" value={b.gross} onChange={(e) => setBags((bs) => bs.map((x, j) => (j === i ? { ...x, gross: e.target.value } : x)))} /></td>
-                  <td className="r"><input id={`b-tare-${i}`} className="input num" style={{ width: 80 }} inputMode="decimal" value={b.tare} onChange={(e) => setBags((bs) => bs.map((x, j) => (j === i ? { ...x, tare: e.target.value } : x)))} /></td>
-                  <td className="r num">{Number(b.gross) ? kg(Number(b.gross) - (Number(b.tare) || 0)) : '–'}</td>
-                  <td><button className="iconbtn" aria-label="ลบแถว" onClick={() => setBags((bs) => bs.filter((_, j) => j !== i))}><Icon name="close" size={15} /></button></td>
-                </tr>
+                <TableRow key={i}>
+                  <TableCell>{i + 1}</TableCell>
+                  <TableCell><Input id={`b-grade-${i}`}  list="grade-list" style={{ minWidth: 110 }} value={b.grade} onChange={(e) => setBags((bs) => bs.map((x, j) => (j === i ? { ...x, grade: e.target.value } : x)))} /></TableCell>
+                  <TableCell className="text-right"><Input id={`b-gross-${i}`} className="num text-right" style={{ width: 110 }} inputMode="decimal" value={b.gross} onChange={(e) => setBags((bs) => bs.map((x, j) => (j === i ? { ...x, gross: e.target.value } : x)))} /></TableCell>
+                  <TableCell className="text-right"><Input id={`b-tare-${i}`} className="num text-right" style={{ width: 80 }} inputMode="decimal" value={b.tare} onChange={(e) => setBags((bs) => bs.map((x, j) => (j === i ? { ...x, tare: e.target.value } : x)))} /></TableCell>
+                  <TableCell className="text-right num">{Number(b.gross) ? kg(Number(b.gross) - (Number(b.tare) || 0)) : '–'}</TableCell>
+                  <TableCell><Button variant="ghost" size="icon" aria-label="ลบแถว" onClick={() => setBags((bs) => bs.filter((_, j) => j !== i))}><Icon name="close" size={15} /></Button></TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
         <div className="row">
-          <button className="btn sm" onClick={() => setBags((bs) => [...bs, { grade: bs[bs.length - 1]?.grade ?? 'ปอก', gross: '', tare: String(DEFAULT_TARE) }])}><Icon name="plus" size={14} />เพิ่มกระสอบ</button>
+          <Button variant="outline" size="sm" onClick={() => setBags((bs) => [...bs, { grade: bs[bs.length - 1]?.grade ?? 'ปอก', gross: '', tare: String(DEFAULT_TARE) }])}><Icon name="plus" size={14} />เพิ่มกระสอบ</Button>
           <span className="spacer" />
           <span className="muted" style={{ fontSize: 13 }}>รวม {parsedBags.length} กระสอบ · <b className="num">{kg(netKg)}</b> กก.{truckKg > 0 && <> · ต่างจากตาชั่งรถ <b className="num">{kg(truckKg - netKg)}</b> กก.</>}</span>
         </div>
       </div>
 
-      <div className="card card-b stack">
+      <div className="panel stack">
         <h3>ราคาต่อเกรด</h3>
         {lines.length ? (
-          <div className="tbl-wrap">
-            <table className="tbl">
-              <thead><tr><th>เกรด</th><th className="r">นน.สุทธิ</th><th className="r">ราคา/กก.</th><th className="r">ราคารวม</th></tr></thead>
-              <tbody>
+          <div>
+            <Table>
+              <TableHeader><TableRow><TableHead>เกรด</TableHead><TableHead className="text-right">นน.สุทธิ</TableHead><TableHead className="text-right">ราคา/กก.</TableHead><TableHead className="text-right">ราคารวม</TableHead></TableRow></TableHeader>
+              <TableBody>
                 {lines.map((l) => (
-                  <tr key={l.grade}>
-                    <td><GradeChip g={l.grade} /></td>
-                    <td className="r num">{kg(l.net)}</td>
-                    <td className="r"><input id={`p-${l.grade}`} className="input num" style={{ width: 110 }} inputMode="decimal" placeholder={model.gradeByName.get(l.grade)?.lastPrice ? `ล่าสุด ${model.gradeByName.get(l.grade)!.lastPrice}` : 'รอราคา'} value={prices[l.grade] || ''} onChange={(e) => setPrices((p) => ({ ...p, [l.grade]: Number(e.target.value) || 0 }))} /></td>
-                    <td className="r num">{baht(l.total)}</td>
-                  </tr>
+                  <TableRow key={l.grade}>
+                    <TableCell><GradeChip g={l.grade} /></TableCell>
+                    <TableCell className="text-right num">{kg(l.net)}</TableCell>
+                    <TableCell className="text-right"><Input id={`p-${l.grade}`} className="num text-right" style={{ width: 110 }} inputMode="decimal" placeholder={model.gradeByName.get(l.grade)?.lastPrice ? `ล่าสุด ${model.gradeByName.get(l.grade)!.lastPrice}` : 'รอราคา'} value={prices[l.grade] || ''} onChange={(e) => setPrices((p) => ({ ...p, [l.grade]: Number(e.target.value) || 0 }))} /></TableCell>
+                    <TableCell className="text-right num">{baht(l.total)}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-              <tfoot>
-                <tr><td colSpan={3}>รวม</td><td className="r num">{baht(sub)}</td></tr>
-                <tr><td colSpan={3}>รวม VAT {noVat ? '(ไม่มี)' : '7%'}</td><td className="r num">{baht(noVat ? sub : sub * (1 + VAT_RATE))}</td></tr>
-              </tfoot>
-            </table>
+              </TableBody>
+              <TableFooter>
+                <TableRow><TableCell colSpan={3}>รวม</TableCell><TableCell className="text-right num">{baht(sub)}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={3}>รวม VAT {noVat ? '(ไม่มี)' : '7%'}</TableCell><TableCell className="text-right num">{baht(noVat ? sub : sub * (1 + VAT_RATE))}</TableCell></TableRow>
+              </TableFooter>
+            </Table>
           </div>
         ) : <Empty>ใส่น้ำหนักกระสอบก่อน ระบบจะรวมเป็นเกรดให้</Empty>}
-        <div className="field"><label htmlFor="f-note">หมายเหตุ</label><textarea id="f-note" className="input" rows={2} value={note} onChange={(e) => setNote(e.target.value)} /></div>
+        <div className="field"><Label htmlFor="f-note">หมายเหตุ</Label><Textarea id="f-note"  rows={2} value={note} onChange={(e) => setNote(e.target.value)} /></div>
       </div>
-      {err && <div className="note warn">{err}</div>}
-      <div className="row"><span className="spacer" /><button className="btn" onClick={onClose}>ยกเลิก</button><button className="btn pri" onClick={save}>บันทึกใบรับ</button></div>
+      {err && <Note tone="warn">{err}</Note>}
+      <div className="row"><span className="spacer" /><Button variant="outline" onClick={onClose}>ยกเลิก</Button><Button onClick={save}>บันทึกใบรับ</Button></div>
     </Drawer>
   );
 }

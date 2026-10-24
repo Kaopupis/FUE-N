@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Card, ConfirmButton, Drawer, Empty, GradeChip, Icon, PageHead, useApp } from '../components/ui';
+import { Card, ConfirmButton, Drawer, Empty, GradeChip, Icon, Note, PageHead, useApp } from '../components/ui';
 import { nextDocId } from '../lib/calc';
 import { baht, kg, round2, thDate, todayISO } from '../lib/format';
 import type { Issue } from '../lib/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function Issues() {
   const { local, nav, update, toast } = useApp();
@@ -16,31 +21,31 @@ export default function Issues() {
         crumb="จ่ายสินค้า"
         title="จ่ายออก / ขาย"
         desc="บันทึกสินค้าที่ขายหรือส่งออกจากโกดัง ระบบจะตัดยอดสต๊อกของเกรดนั้นทันที"
-        actions={<button className="btn pri" onClick={() => setForm(true)}><Icon name="plus" size={16} />บันทึกจ่ายออก</button>}
+        actions={<Button onClick={() => setForm(true)}><Icon name="plus" size={16} />บันทึกจ่ายออก</Button>}
       />
       <Card pad={false}>
-        <div className="tbl-wrap">
-          <table className="tbl">
-            <thead><tr><th>เลขที่</th><th>วันที่</th><th>ลูกค้า / ปลายทาง</th><th>เกรด</th><th className="r">น้ำหนัก (กก.)</th><th className="r">มูลค่าขาย (บาท)</th><th>หมายเหตุ</th><th /></tr></thead>
-            <tbody>
+        <div>
+          <Table>
+            <TableHeader><TableRow><TableHead>เลขที่</TableHead><TableHead>วันที่</TableHead><TableHead>ลูกค้า / ปลายทาง</TableHead><TableHead>เกรด</TableHead><TableHead className="text-right">น้ำหนัก (กก.)</TableHead><TableHead className="text-right">มูลค่าขาย (บาท)</TableHead><TableHead>หมายเหตุ</TableHead><TableHead /></TableRow></TableHeader>
+            <TableBody>
               {rows.map((i) => (
-                <tr key={i.id}>
-                  <td className="num">{i.id}</td>
-                  <td className="num">{thDate(i.date)}</td>
-                  <td>{i.customer}</td>
-                  <td><div className="chips">{i.lines.map((l) => <GradeChip key={l.grade} g={l.grade} kg={kg(l.net)} />)}</div></td>
-                  <td className="r num">{kg(i.lines.reduce((s, l) => s + l.net, 0))}</td>
-                  <td className="r num">{baht(i.lines.reduce((s, l) => s + l.net * l.price, 0))}</td>
-                  <td className="muted">{i.note}</td>
-                  <td className="r"><ConfirmButton small onConfirm={() => del(i.id)} /></td>
-                </tr>
+                <TableRow key={i.id}>
+                  <TableCell className="num">{i.id}</TableCell>
+                  <TableCell className="num">{thDate(i.date)}</TableCell>
+                  <TableCell>{i.customer}</TableCell>
+                  <TableCell><div className="chips">{i.lines.map((l) => <GradeChip key={l.grade} g={l.grade} kg={kg(l.net)} />)}</div></TableCell>
+                  <TableCell className="text-right num">{kg(i.lines.reduce((s, l) => s + l.net, 0))}</TableCell>
+                  <TableCell className="text-right num">{baht(i.lines.reduce((s, l) => s + l.net * l.price, 0))}</TableCell>
+                  <TableCell className="muted">{i.note}</TableCell>
+                  <TableCell className="text-right"><ConfirmButton small onConfirm={() => del(i.id)} /></TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
           {!rows.length && (
             <Empty>
               <p>ยังไม่มีรายการจ่ายออก ชีตต้นฉบับบันทึกเฉพาะฝั่งรับเข้า</p>
-              <button className="btn pri" onClick={() => setForm(true)}><Icon name="plus" size={16} />บันทึกการขายครั้งแรก</button>
+              <Button onClick={() => setForm(true)}><Icon name="plus" size={16} />บันทึกการขายครั้งแรก</Button>
             </Empty>
           )}
         </div>
@@ -74,32 +79,32 @@ function IssueForm({ onClose }: { onClose: () => void }) {
 
   return (
     <Drawer title="บันทึกจ่ายออก / ขาย" onClose={onClose}>
-      <div className="card card-b stack">
+      <div className="panel stack">
         <div className="form-grid">
-          <div className="field"><label htmlFor="i-date">วันที่</label><input id="i-date" className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-          <div className="field"><label htmlFor="i-cus">ลูกค้า / ปลายทาง</label><input id="i-cus" className="input" list="cus-list" value={customer} onChange={(e) => setCustomer(e.target.value)} /><datalist id="cus-list">{customers.map((c) => <option key={c} value={c} />)}</datalist></div>
+          <div className="field"><Label htmlFor="i-date">วันที่</Label><Input id="i-date"  type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+          <div className="field"><Label htmlFor="i-cus">ลูกค้า / ปลายทาง</Label><Input id="i-cus"  list="cus-list" value={customer} onChange={(e) => setCustomer(e.target.value)} /><datalist id="cus-list">{customers.map((c) => <option key={c} value={c} />)}</datalist></div>
         </div>
-        <div className="tbl-wrap">
-          <table className="tbl">
-            <thead><tr><th>เกรด</th><th className="r">คงเหลือ</th><th className="r">น้ำหนักจ่าย (กก.)</th><th className="r">ราคาขาย/กก.</th><th /></tr></thead>
-            <tbody>
+        <div>
+          <Table>
+            <TableHeader><TableRow><TableHead>เกรด</TableHead><TableHead className="text-right">คงเหลือ</TableHead><TableHead className="text-right">น้ำหนักจ่าย (กก.)</TableHead><TableHead className="text-right">ราคาขาย/กก.</TableHead><TableHead /></TableRow></TableHeader>
+            <TableBody>
               {lines.map((l, i) => (
-                <tr key={i}>
-                  <td><select id={`il-g-${i}`} className="input" value={l.grade} onChange={(e) => setLines((x) => x.map((y, j) => (j === i ? { ...y, grade: e.target.value } : y)))}>{model.grades.filter((g) => g.balance > 0 || g.grade === l.grade).map((g) => <option key={g.grade}>{g.grade}</option>)}</select></td>
-                  <td className="r num muted">{kg(model.gradeByName.get(l.grade)?.balance ?? 0)}</td>
-                  <td className="r"><input id={`il-n-${i}`} className="input num" style={{ width: 120 }} inputMode="decimal" value={l.net} onChange={(e) => setLines((x) => x.map((y, j) => (j === i ? { ...y, net: e.target.value } : y)))} /></td>
-                  <td className="r"><input id={`il-p-${i}`} className="input num" style={{ width: 110 }} inputMode="decimal" value={l.price} onChange={(e) => setLines((x) => x.map((y, j) => (j === i ? { ...y, price: e.target.value } : y)))} /></td>
-                  <td><button className="iconbtn" aria-label="ลบแถว" onClick={() => setLines((x) => x.filter((_, j) => j !== i))}><Icon name="close" size={15} /></button></td>
-                </tr>
+                <TableRow key={i}>
+                  <TableCell><NativeSelect id={`il-g-${i}`} value={l.grade} onChange={(e) => setLines((x) => x.map((y, j) => (j === i ? { ...y, grade: e.target.value } : y)))}>{model.grades.filter((g) => g.balance > 0 || g.grade === l.grade).map((g) => <option key={g.grade}>{g.grade}</option>)}</NativeSelect></TableCell>
+                  <TableCell className="text-right num muted">{kg(model.gradeByName.get(l.grade)?.balance ?? 0)}</TableCell>
+                  <TableCell className="text-right"><Input id={`il-n-${i}`} className="num text-right" style={{ width: 120 }} inputMode="decimal" value={l.net} onChange={(e) => setLines((x) => x.map((y, j) => (j === i ? { ...y, net: e.target.value } : y)))} /></TableCell>
+                  <TableCell className="text-right"><Input id={`il-p-${i}`} className="num text-right" style={{ width: 110 }} inputMode="decimal" value={l.price} onChange={(e) => setLines((x) => x.map((y, j) => (j === i ? { ...y, price: e.target.value } : y)))} /></TableCell>
+                  <TableCell><Button variant="ghost" size="icon" aria-label="ลบแถว" onClick={() => setLines((x) => x.filter((_, j) => j !== i))}><Icon name="close" size={15} /></Button></TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
-        <button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => setLines((x) => [...x, { grade: avail[0]?.grade ?? 'ปอก', net: '', price: '' }])}><Icon name="plus" size={14} />เพิ่มเกรด</button>
-        <div className="field"><label htmlFor="i-note">หมายเหตุ</label><input id="i-note" className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น ทะเบียนรถ เลขที่ใบส่งของ" /></div>
+        <Button variant="outline" size="sm" style={{ alignSelf: 'flex-start' }} onClick={() => setLines((x) => [...x, { grade: avail[0]?.grade ?? 'ปอก', net: '', price: '' }])}><Icon name="plus" size={14} />เพิ่มเกรด</Button>
+        <div className="field"><Label htmlFor="i-note">หมายเหตุ</Label><Input id="i-note"  value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น ทะเบียนรถ เลขที่ใบส่งของ" /></div>
       </div>
-      {err && <div className="note warn">{err}</div>}
-      <div className="row"><span className="spacer" /><button className="btn" onClick={onClose}>ยกเลิก</button><button className="btn pri" onClick={save}>บันทึกจ่ายออก</button></div>
+      {err && <Note tone="warn">{err}</Note>}
+      <div className="row"><span className="spacer" /><Button variant="outline" onClick={onClose}>ยกเลิก</Button><Button onClick={save}>บันทึกจ่ายออก</Button></div>
     </Drawer>
   );
 }

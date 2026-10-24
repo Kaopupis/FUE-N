@@ -1,6 +1,9 @@
 import React from 'react';
 import { Bar, Card, GradeChip, Icon, Kpi, PageHead, ReceiptLink, StatusChip, gradeColor, useApp } from '../components/ui';
 import { baht, bahtShort, kg, thDate, tonne } from '../lib/format';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function Suppliers() {
   const { model, nav, go } = useApp();
@@ -11,28 +14,28 @@ export default function Suppliers() {
     <>
       <PageHead crumb="คู่ค้า" title="ผู้ขาย / คู่ค้า" desc="สรุปผู้ขายจากใบรับ กดชื่อเพื่อดูใบรับ เกรดที่ส่ง และยอดซื้อ" />
       <Card pad={false}>
-        <div className="tbl-wrap" style={{ marginTop: 4 }}>
-          <table className="tbl">
-            <thead><tr><th>ผู้ขาย</th><th>กลุ่ม</th><th className="r">ใบรับ</th><th style={{ minWidth: 160 }}>น้ำหนักรับเข้า</th><th className="r">ยอดซื้อก่อน VAT</th><th className="r">ราคาเฉลี่ย/กก.</th><th>เกรดหลัก</th><th>รับล่าสุด</th></tr></thead>
-            <tbody>
+        <div style={{ marginTop: 4 }}>
+          <Table>
+            <TableHeader><TableRow><TableHead>ผู้ขาย</TableHead><TableHead>กลุ่ม</TableHead><TableHead className="text-right">ใบรับ</TableHead><TableHead style={{ minWidth: 160 }}>น้ำหนักรับเข้า</TableHead><TableHead className="text-right">ยอดซื้อก่อน VAT</TableHead><TableHead className="text-right">ราคาเฉลี่ย/กก.</TableHead><TableHead>เกรดหลัก</TableHead><TableHead>รับล่าสุด</TableHead></TableRow></TableHeader>
+            <TableBody>
               {model.suppliers.map((x) => {
                 const pricedKg = model.receipts.filter((r) => r.supplier === x.name).reduce((a, r) => a + r.lines.filter((l) => l.price > 0).reduce((b, l) => b + l.net, 0), 0);
                 const topG = Object.entries(x.grades).sort((a, b) => b[1] - a[1]).slice(0, 3);
                 return (
-                  <tr key={x.name} className={`click${s?.name === x.name ? ' sel' : ''}`} onClick={() => go({ page: 'suppliers', supplier: x.name })}>
-                    <td><b>{x.name}</b>{x.noVat && <span className="chip info" style={{ marginLeft: 6 }}>No VAT</span>}</td>
-                    <td className="muted">{x.group !== x.name ? `เครือ ${x.group}` : '–'}</td>
-                    <td className="r num">{x.receipts.length}</td>
-                    <td><div className="stack" style={{ gap: 3 }}><span className="num" style={{ fontSize: 13 }}>{kg(x.kg)} กก.</span><Bar v={x.kg} max={max} /></div></td>
-                    <td className="r num">{baht(x.value)}</td>
-                    <td className="r num">{pricedKg ? baht(x.value / pricedKg) : '–'}</td>
-                    <td><div className="chips">{topG.map(([g]) => <GradeChip key={g} g={g} />)}</div></td>
-                    <td className="num muted">{thDate(x.last)}</td>
-                  </tr>
+                  <TableRow key={x.name} className={`click${s?.name === x.name ? ' sel' : ''}`} onClick={() => go({ page: 'suppliers', supplier: x.name })}>
+                    <TableCell><b>{x.name}</b>{x.noVat && <Badge variant="info" style={{ marginLeft: 6 }}>No VAT</Badge>}</TableCell>
+                    <TableCell className="muted">{x.group !== x.name ? `เครือ ${x.group}` : '–'}</TableCell>
+                    <TableCell className="text-right num">{x.receipts.length}</TableCell>
+                    <TableCell><div className="stack" style={{ gap: 3 }}><span className="num" style={{ fontSize: 13 }}>{kg(x.kg)} กก.</span><Bar v={x.kg} max={max} /></div></TableCell>
+                    <TableCell className="text-right num">{baht(x.value)}</TableCell>
+                    <TableCell className="text-right num">{pricedKg ? baht(x.value / pricedKg) : '–'}</TableCell>
+                    <TableCell><div className="chips">{topG.map(([g]) => <GradeChip key={g} g={g} />)}</div></TableCell>
+                    <TableCell className="num muted">{thDate(x.last)}</TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </Card>
 
@@ -40,33 +43,33 @@ export default function Suppliers() {
         <>
           <div className="row">
             <h2 style={{ fontSize: '1.35rem' }}>{s.name}</h2>
-            {s.pending > 0 && <span className="chip warn">รอราคา {s.pending} ใบ</span>}
+            {s.pending > 0 && <Badge variant="warning">รอราคา {s.pending} ใบ</Badge>}
             <span className="spacer" />
-            <button className="btn sm" onClick={() => go({ page: 'relations', supplier: s.name })}><Icon name="relations" size={14} />ผังความสัมพันธ์</button>
-            <button className="btn sm" onClick={() => go({ page: 'receipts', supplier: s.name })}>กรองใบรับ</button>
+            <Button variant="outline" size="sm" onClick={() => go({ page: 'relations', supplier: s.name })}><Icon name="relations" size={14} />ผังความสัมพันธ์</Button>
+            <Button variant="outline" size="sm" onClick={() => go({ page: 'receipts', supplier: s.name })}>กรองใบรับ</Button>
           </div>
-          <div className="grid g-kpi">
+          <div className="grid-kpi">
             <Kpi hero label="น้ำหนักรับเข้า" value={kg(s.kg)} unit="กก." sub={tonne(s.kg)} />
             <Kpi label="ยอดซื้อก่อน VAT" value={bahtShort(s.value)} unit="บาท" />
             <Kpi label="จำนวนใบรับ" value={String(s.receipts.length)} unit="ใบ" sub={`${thDate(s.first)} – ${thDate(s.last)}`} />
             <Kpi label="สัดส่วนของทั้งหมด" value={((s.kg / model.totals.kg) * 100).toFixed(1)} unit="%" sub="ตามน้ำหนัก" />
           </div>
-          <div className="grid g-2">
+          <div className="grid-2">
             <Card title="ใบรับของผู้ขายนี้" pad={false}>
-              <div className="tbl-wrap scroll-y" style={{ maxHeight: 420, marginTop: 8 }}>
-                <table className="tbl">
-                  <thead><tr><th>เลขที่รับ</th><th>วันที่</th><th className="r">นน.สุทธิ</th><th className="r">รวม VAT</th><th>สถานะ</th></tr></thead>
-                  <tbody>
+              <div className="scroll-y" style={{ maxHeight: 420, marginTop: 8 }}>
+                <Table>
+                  <TableHeader><TableRow><TableHead>เลขที่รับ</TableHead><TableHead>วันที่</TableHead><TableHead className="text-right">นน.สุทธิ</TableHead><TableHead className="text-right">รวม VAT</TableHead><TableHead>สถานะ</TableHead></TableRow></TableHeader>
+                  <TableBody>
                     {[...s.receipts].reverse().map((id) => {
                       const r = model.receiptById.get(id)!;
                       return (
-                        <tr key={id} className="click" onClick={() => go({ page: 'receipts', receiptId: id, supplier: s.name })}>
-                          <td><ReceiptLink id={id} /></td><td className="num">{thDate(r.date)}</td><td className="r num">{kg(r.netKg)}</td><td className="r num">{r.total ? baht(r.total) : '–'}</td><td><StatusChip s={r.status} /></td>
-                        </tr>
+                        <TableRow key={id} className="click" onClick={() => go({ page: 'receipts', receiptId: id, supplier: s.name })}>
+                          <TableCell><ReceiptLink id={id} /></TableCell><TableCell className="num">{thDate(r.date)}</TableCell><TableCell className="text-right num">{kg(r.netKg)}</TableCell><TableCell className="text-right num">{r.total ? baht(r.total) : '–'}</TableCell><TableCell><StatusChip s={r.status} /></TableCell>
+                        </TableRow>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </Card>
             <Card title="เกรดที่ส่ง" sub="น้ำหนักสะสม (กก.)">

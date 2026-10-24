@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { ApiError, api, type User } from '../lib/api';
-import { Icon } from './ui';
+import { Icon, Note } from './ui';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 function AuthShell({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <div className="auth-wrap">
-      <div className="auth-card card">
+      <Card className="auth-card gap-5 border-t-4 border-t-primary px-6 py-6">
         <div className="brand auth-brand">
           <div className="brand-mark"><Icon name="stock" size={22} /></div>
           <div><b>สหมิตร สต๊อก</b><small>รับซื้อทองแดง · เศษโลหะ</small></div>
@@ -15,7 +19,7 @@ function AuthShell({ title, sub, children }: { title: string; sub?: string; chil
           {sub && <p className="muted" style={{ margin: 0 }}>{sub}</p>}
         </div>
         {children}
-      </div>
+      </Card>
     </div>
   );
 }
@@ -43,16 +47,16 @@ export function LoginScreen({ onLogin, notice }: { onLogin: (u: User) => void; n
   return (
     <AuthShell title="เข้าสู่ระบบ" sub="ใช้ชื่อผู้ใช้และรหัสผ่านที่ผู้ดูแลระบบให้ไว้">
       <form className="stack" onSubmit={submit}>
-        <div className="field"><label htmlFor="login-user">ชื่อผู้ใช้</label><input id="login-user" className="input" autoComplete="username" autoFocus value={username} onChange={(e) => setUsername(e.target.value)} required /></div>
+        <div className="field"><Label htmlFor="login-user">ชื่อผู้ใช้</Label><Input id="login-user"  autoComplete="username" autoFocus value={username} onChange={(e) => setUsername(e.target.value)} required /></div>
         <div className="field">
-          <label htmlFor="login-pass">รหัสผ่าน</label>
+          <Label htmlFor="login-pass">รหัสผ่าน</Label>
           <div className="row" style={{ flexWrap: 'nowrap', gap: 6 }}>
-            <input id="login-pass" className="input" type={show ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            <button type="button" className="btn sm" onClick={() => setShow((s) => !s)}>{show ? 'ซ่อน' : 'แสดง'}</button>
+            <Input id="login-pass"  type={show ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <Button type="button" variant="outline" size="sm" onClick={() => setShow((s) => !s)}>{show ? 'ซ่อน' : 'แสดง'}</Button>
           </div>
         </div>
-        {err && <div className="note warn" role="alert">{err}</div>}
-        <button className="btn pri" style={{ justifyContent: 'center' }} disabled={busy}>{busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}</button>
+        {err && <Note tone="warn">{err}</Note>}
+        <Button className="w-full" disabled={busy}>{busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}</Button>
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>ลืมรหัสผ่าน ติดต่อผู้ดูแลระบบให้รีเซ็ตรหัสผ่าน</p>
       </form>
     </AuthShell>
@@ -82,16 +86,16 @@ export function ChangePasswordForm({ onDone, onCancel, forced }: { onDone: (u: U
   };
   return (
     <form className="stack" onSubmit={submit}>
-      {forced && <div className="note">รหัสผ่านนี้เป็นรหัสชั่วคราว กรุณาตั้งรหัสผ่านใหม่ของคุณก่อนเริ่มใช้งาน</div>}
+      {forced && <Note>รหัสผ่านนี้เป็นรหัสชั่วคราว กรุณาตั้งรหัสผ่านใหม่ของคุณก่อนเริ่มใช้งาน</Note>}
       <input type="text" autoComplete="username" hidden readOnly />
-      <div className="field"><label htmlFor="cp-cur">{forced ? 'รหัสผ่านชั่วคราว' : 'รหัสผ่านปัจจุบัน'}</label><input id="cp-cur" className="input" type="password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} required /></div>
-      <div className="field"><label htmlFor="cp-new">รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)</label><input id="cp-new" className="input" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} required /></div>
-      <div className="field"><label htmlFor="cp-again">ยืนยันรหัสผ่านใหม่</label><input id="cp-again" className="input" type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} required /></div>
-      {err && <div className="note warn" role="alert">{err}</div>}
+      <div className="field"><Label htmlFor="cp-cur">{forced ? 'รหัสผ่านชั่วคราว' : 'รหัสผ่านปัจจุบัน'}</Label><Input id="cp-cur"  type="password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} required /></div>
+      <div className="field"><Label htmlFor="cp-new">รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)</Label><Input id="cp-new"  type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} required /></div>
+      <div className="field"><Label htmlFor="cp-again">ยืนยันรหัสผ่านใหม่</Label><Input id="cp-again"  type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} required /></div>
+      {err && <Note tone="warn">{err}</Note>}
       <div className="row">
         <span className="spacer" />
-        {onCancel && <button type="button" className="btn" onClick={onCancel}>{forced ? 'ออกจากระบบ' : 'ยกเลิก'}</button>}
-        <button className="btn pri" disabled={busy}>{busy ? 'กำลังบันทึก…' : 'บันทึกรหัสผ่านใหม่'}</button>
+        {onCancel && <Button type="button" variant="outline" onClick={onCancel}>{forced ? 'ออกจากระบบ' : 'ยกเลิก'}</Button>}
+        <Button disabled={busy}>{busy ? 'กำลังบันทึก…' : 'บันทึกรหัสผ่านใหม่'}</Button>
       </div>
     </form>
   );
