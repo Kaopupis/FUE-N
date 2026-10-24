@@ -54,7 +54,7 @@ npm run build         # ได้ไฟล์ระบบสต๊อกใน d
 | --- | --- | --- |
 | Build command `npm run build` · Output `dist` | dashboard / `wrangler.toml` | สร้างเว็บระบบสต๊อก |
 | `DB` → `stock-sahamit-db` | `wrangler.toml` | ฐานข้อมูลผู้ใช้และพนักงาน |
-| `PHOTOS` → R2 `stock-sahamit-photos` | `wrangler.toml` | รูปพนักงาน (ย่อเหลือไม่เกิน 800px ก่อนอัปโหลด, JPG/PNG/WEBP ไม่เกิน 5 MB) |
+| `PHOTOS` → R2 `stock-sahamit` | `wrangler.toml` | รูปพนักงาน (ย่อเหลือไม่เกิน 800px ก่อนอัปโหลด, JPG/PNG/WEBP ไม่เกิน 5 MB) |
 | `ADMIN_USERNAME` | `wrangler.toml` (ค่าเริ่มต้น `admin`) | ชื่อผู้ดูแลคนแรก |
 | `SESSION_TTL_HOURS` | `wrangler.toml` (ค่าเริ่มต้น `12`) | อายุการ login |
 | `ADMIN_PASSWORD` | **Secret** ใน dashboard (Settings → Variables and Secrets) | รหัสผ่านผู้ดูแลคนแรก อย่างน้อย 8 ตัว |

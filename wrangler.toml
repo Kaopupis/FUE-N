@@ -18,4 +18,4 @@ migrations_dir = "migrations"
 # รูปพนักงาน: เปิด R2 ใน dashboard แล้วสร้าง bucket ชื่อนี้ก่อน deploy
 [[r2_buckets]]
 binding = "PHOTOS"
-bucket_name = "stock-sahamit-photos"
+bucket_name = "stock-sahamit"
